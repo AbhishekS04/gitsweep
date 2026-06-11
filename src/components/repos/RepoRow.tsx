@@ -106,28 +106,31 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
     };
   }, [repo.owner.login, repo.name]);
 
+  const isStarred = favoritedIds.includes(repo.id);
+
   return (
     <div className="flex flex-col w-full">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: Math.min(index * 0.02, 0.3), duration: 0.2 }}
+        whileHover={{ y: -2, transition: { duration: 0.2 } }}
+        transition={{ delay: Math.min(index * 0.02, 0.3), duration: 0.25, type: 'spring', stiffness: 200, damping: 22 }}
         className={cn(
           "group flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 py-4 px-4 rounded-xl border transition-all cursor-pointer shadow-sm hover:shadow-md",
           isSelected 
-            ? "border-primary/50 bg-primary/5 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]" 
-            : "border-border/40 bg-background hover:bg-accent/40 hover:border-border/80"
+            ? "border-primary bg-primary/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]" 
+            : "border-white/[0.06] bg-neutral-900/40 hover:bg-neutral-800/40 hover:border-white/10"
         )}
         onClick={() => onToggle(repo.id)}
       >
-        <div className="flex items-start md:items-center gap-4 flex-1 w-full overflow-hidden">
+        <div className="flex items-start md:items-center gap-3 sm:gap-4 flex-1 w-full min-w-0">
           <div className="mt-1 md:mt-0 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <Checkbox checked={isSelected} onCheckedChange={() => onToggle(repo.id)} />
           </div>
           
           <div className="flex flex-col gap-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-mono font-medium text-base truncate text-foreground/90 group-hover:text-primary transition-colors">
+              <h3 className="font-mono font-medium text-sm sm:text-base truncate text-white group-hover:text-primary transition-colors max-w-full">
                 {repo.name}
                 {isContribution && (
                   <span className="ml-2 text-xs font-normal text-muted-foreground">
@@ -137,24 +140,24 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
               </h3>
               
               {repo.private ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 h-6 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-accent/25">
-                  <Lock className="h-3 w-3" /> Private
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 px-2 h-5.5 text-[9px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/10">
+                  <Lock className="h-2.5 w-2.5" /> Private
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 h-6 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-accent/25">
-                  <Unlock className="h-3 w-3" /> Public
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 px-2 h-5.5 text-[9px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10">
+                  <Unlock className="h-2.5 w-2.5" /> Public
                 </span>
               )}
 
               {repo.archived && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 px-2.5 h-6 text-[10px] font-semibold uppercase tracking-wider">
-                  <Archive className="h-3 w-3" /> Archived
+                <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/20 px-2 h-5.5 text-[9px] font-bold text-rose-400 uppercase tracking-wider bg-rose-500/10">
+                  <Archive className="h-2.5 w-2.5" /> Archived
                 </span>
               )}
               
               {repo.fork && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2.5 h-6 text-[10px] font-semibold uppercase tracking-wider">
-                  <GitFork className="h-3 w-3" /> Fork
+                <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/20 px-2 h-5.5 text-[9px] font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10">
+                  <GitFork className="h-2.5 w-2.5" /> Fork
                 </span>
               )}
 
@@ -162,7 +165,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                 <Button
                   variant="outline"
                   size="sm"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary transition-all select-none cursor-pointer shrink-0 ml-1.5 shadow-sm h-6 px-2.5 text-[10px] font-bold uppercase tracking-wider"
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/20 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary transition-all select-none cursor-pointer shrink-0 ml-1.5 h-5.5 px-2 text-[9px] font-bold uppercase tracking-wider shadow-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleInvite();
@@ -174,38 +177,47 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
             </div>
             
             {repo.description && (
-              <p className="text-sm text-muted-foreground truncate max-w-2xl">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-xl">
                 {repo.description}
               </p>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-3 pl-8 md:flex md:flex-row md:items-center md:gap-x-0 md:gap-y-0 md:ml-auto md:w-auto md:pl-0 md:mt-0 text-xs text-muted-foreground w-full">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 pl-8 md:mt-0 md:pl-0 md:ml-auto text-[11px] sm:text-xs text-muted-foreground w-full md:w-auto shrink-0 border-t border-white/[0.04] pt-2 md:pt-0 md:border-t-0">
           {repo.language && (
-            <div className="flex items-center gap-1.5 w-full md:w-28">
-              <span className={cn("h-2 w-2 rounded-full shrink-0", getLanguageColor(repo.language))} />
-              <span className="truncate">{repo.language}</span>
+            <div className="flex items-center gap-1.5 w-[90px] sm:w-28 shrink-0">
+              <span className="h-2 w-2 rounded-full shrink-0 relative flex">
+                <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping", getLanguageColor(repo.language))} />
+                <span className={cn("relative inline-flex rounded-full h-2 w-2", getLanguageColor(repo.language))} />
+              </span>
+              <span className="truncate text-white/90">{repo.language}</span>
             </div>
           )}
           
-          <button 
+          <motion.button 
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(repo.id);
             }}
+            whileTap={{ scale: 0.8 }}
             className={cn(
-              "flex items-center gap-1 cursor-pointer transition-colors bg-transparent border-none p-0 focus:outline-none hover:text-yellow-500",
-              favoritedIds.includes(repo.id) ? "text-yellow-500" : "text-muted-foreground/80"
+              "flex items-center gap-1 cursor-pointer transition-colors bg-transparent border-none p-0 focus:outline-none hover:text-yellow-400 shrink-0",
+              isStarred ? "text-yellow-400" : "text-muted-foreground/80"
             )}
-            title={favoritedIds.includes(repo.id) ? "Remove from Favorites" : "Add to Favorites"}
+            title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
           >
-            <Star className={cn("h-3.5 w-3.5 shrink-0 transition-transform active:scale-75", favoritedIds.includes(repo.id) && "fill-yellow-500")} />
-            <span className="font-mono">{repo.stargazers_count}</span>
-          </button>
+            <motion.div
+              animate={{ scale: isStarred ? [1, 1.3, 1] : 1 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <Star className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isStarred && "fill-yellow-400")} />
+            </motion.div>
+            <span className="font-mono text-[10px] sm:text-xs">{repo.stargazers_count}</span>
+          </motion.button>
 
           <div 
-            className="flex items-center gap-1.5 w-full md:w-32 shrink-0 cursor-pointer hover:text-primary transition-colors"
+            className="flex items-center gap-1 w-[85px] sm:w-24 shrink-0 cursor-pointer hover:text-primary transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               if (!isContribution) toggleInvite();
@@ -216,22 +228,22 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
             {loadingCollabs ? (
               <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />
             ) : (
-              <span className="font-mono">
+              <span className="font-mono text-[10px] sm:text-xs truncate">
                 {collabCount !== null 
-                  ? `${collabCount} member${collabCount !== 1 ? 's' : ''}` 
+                  ? `${collabCount} ${collabCount === 1 ? 'member' : 'members'}` 
                   : isContribution ? 'Public' : 'Members'}
               </span>
             )}
           </div>
           
-          <div className="flex items-center gap-1 w-full md:w-24">
+          <div className="flex items-center gap-1 shrink-0">
             <HardDrive className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
-            <span className="font-mono">{formatSize(repo.size)}</span>
+            <span className="font-mono text-[10px] sm:text-xs">{formatSize(repo.size)}</span>
           </div>
           
-          <div className="flex items-center gap-1 col-span-2 md:col-span-1 w-full md:w-28 whitespace-nowrap">
+          <div className="flex items-center gap-1 ml-auto md:ml-0 whitespace-nowrap shrink-0">
             <Clock className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
-            <span className="font-mono">{formatDistanceToNow(repo.updated_at)}</span>
+            <span className="font-mono text-[10px] sm:text-xs">{formatDistanceToNow(repo.updated_at)}</span>
           </div>
         </div>
       </motion.div>
@@ -305,16 +317,19 @@ export const RepoCard: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, 
     };
   }, [repo.owner.login, repo.name]);
   
+  const isStarred = favoritedIds.includes(repo.id);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: Math.min(index * 0.01, 0.2), duration: 0.2 }}
+      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      transition={{ delay: Math.min(index * 0.01, 0.2), duration: 0.25, type: 'spring', stiffness: 200, damping: 22 }}
       className={cn(
-        "group relative flex flex-col justify-between gap-4 p-5 rounded-xl border transition-all cursor-pointer h-48 overflow-hidden shadow-sm hover:shadow-md",
+        "group relative flex flex-col justify-between gap-3 p-4 rounded-xl border transition-all cursor-pointer h-48 overflow-hidden shadow-sm hover:shadow-md",
         isSelected 
-          ? "border-primary/50 bg-primary/5 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]" 
-          : "border-border/40 bg-background hover:bg-accent/30 hover:border-border/80"
+          ? "border-primary bg-primary/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]" 
+          : "border-white/[0.06] bg-neutral-900/40 hover:bg-neutral-800/40 hover:border-white/10"
       )}
       onClick={() => onToggle(repo.id)}
     >
@@ -322,14 +337,14 @@ export const RepoCard: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, 
         <Checkbox checked={isSelected} onCheckedChange={() => onToggle(repo.id)} />
       </div>
 
-      <div className="flex flex-col gap-2 pr-8">
-        <h3 className="font-mono font-medium text-base truncate text-foreground/90 group-hover:text-primary transition-colors flex items-center gap-1.5">
+      <div className="flex flex-col gap-1 pr-8 min-w-0">
+        <h3 className="font-mono font-medium text-sm sm:text-base truncate text-white group-hover:text-primary transition-colors flex items-center gap-1.5 max-w-full">
           <span className="truncate">{repo.name}</span>
           {!isContribution && (
             <Button
               variant="outline"
               size="sm"
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary transition-all select-none cursor-pointer shrink-0 ml-1 h-6 px-2.5 text-[10px] font-bold uppercase tracking-wider shadow-sm"
+              className="inline-flex items-center gap-1 rounded-full border border-primary/20 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary transition-all select-none cursor-pointer shrink-0 ml-1 h-5 px-2 text-[9px] font-bold uppercase tracking-wider shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleInvite();
@@ -339,8 +354,8 @@ export const RepoCard: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, 
             </Button>
           )}
         </h3>
-        {repo.owner.login !== user?.login && (
-          <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">
+        {isContribution && (
+          <span className="block text-[10px] font-normal text-muted-foreground">
             by {repo.owner.login}
           </span>
         )}
@@ -348,23 +363,23 @@ export const RepoCard: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, 
         
       <div className="flex flex-wrap gap-1.5">
         {repo.private ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2 h-5.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider bg-accent/20">
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 px-2 h-5 text-[9px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/10">
             <Lock className="h-2.5 w-2.5" /> Private
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2 h-5.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider bg-accent/20">
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 px-2 h-5 text-[9px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10">
             <Unlock className="h-2.5 w-2.5" /> Public
           </span>
         )}
 
         {repo.archived && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 px-2 h-5.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/20 px-2 h-5 text-[9px] font-bold text-rose-400 uppercase tracking-wider bg-rose-500/10">
             <Archive className="h-2.5 w-2.5" /> Archived
           </span>
         )}
         
         {repo.fork && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 h-5.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/20 px-2 h-5 text-[9px] font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10">
             <GitFork className="h-2.5 w-2.5" /> Fork
           </span>
         )}
@@ -376,11 +391,14 @@ export const RepoCard: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, 
         </p>
       )}
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-4 border-t border-border/40">
+      <div className="flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground mt-auto pt-3 border-t border-white/[0.04]">
         {repo.language ? (
           <div className="flex items-center gap-1.5 truncate pr-2">
-            <span className={cn("h-2 w-2 rounded-full shrink-0", getLanguageColor(repo.language))} />
-            <span className="truncate">{repo.language}</span>
+            <span className="h-1.5 w-1.5 rounded-full shrink-0 relative flex">
+              <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping", getLanguageColor(repo.language))} />
+              <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", getLanguageColor(repo.language))} />
+            </span>
+            <span className="truncate text-white/90">{repo.language}</span>
           </div>
         ) : <div />}
         
@@ -397,27 +415,35 @@ export const RepoCard: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, 
             {loadingCollabs ? (
               <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
             ) : (
-              <span className="font-mono">
+              <span className="font-mono text-[10px] sm:text-xs">
                 {collabCount !== null 
                   ? collabCount 
                   : isContribution ? 'Public' : 'Members'}
               </span>
             )}
           </div>
-          <button 
+          
+          <motion.button 
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(repo.id);
             }}
+            whileTap={{ scale: 0.8 }}
             className={cn(
-              "flex items-center gap-1 cursor-pointer transition-colors bg-transparent border-none p-0 focus:outline-none hover:text-yellow-500",
-              favoritedIds.includes(repo.id) ? "text-yellow-500" : "text-muted-foreground"
+              "flex items-center gap-1 cursor-pointer transition-colors bg-transparent border-none p-0 focus:outline-none hover:text-yellow-400",
+              isStarred ? "text-yellow-400" : "text-muted-foreground"
             )}
-            title={favoritedIds.includes(repo.id) ? "Remove from Favorites" : "Add to Favorites"}
+            title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
           >
-            <Star className={cn("h-3.5 w-3.5 transition-transform active:scale-75", favoritedIds.includes(repo.id) && "fill-yellow-500")} />
-            <span className="font-mono">{repo.stargazers_count}</span>
-          </button>
+            <motion.div
+              animate={{ scale: isStarred ? [1, 1.3, 1] : 1 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <Star className={cn("h-3.5 w-3.5 transition-transform", isStarred && "fill-yellow-400")} />
+            </motion.div>
+            <span className="font-mono text-[10px] sm:text-xs">{repo.stargazers_count}</span>
+          </motion.button>
+          
           <div className="flex items-center gap-1" title={formatDistanceToNow(repo.updated_at)}>
             <Clock className="h-3.5 w-3.5" />
           </div>

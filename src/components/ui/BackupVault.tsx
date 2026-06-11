@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  History, Search, X, Trash2, ExternalLink, 
+import {
+  History, Search, X, Trash2, ExternalLink,
   Archive, LogOut, Share2, Shield, Calendar, Clock,
   Plus, RefreshCw, Loader2
 } from 'lucide-react';
@@ -37,9 +37,9 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
       toast.error('No backup file attached', { description: 'Try manual restore for this record.' });
       return;
     }
-    
+
     toast.info(`Restoring ${log.repoName}...`, { description: 'Please wait while we rebuild the repository.' });
-    
+
     const { token, user } = useAuthStore.getState();
     if (!token || !user) return;
 
@@ -57,7 +57,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
       });
       const data = await res.json() as { ok: boolean; message_id?: number; file_id?: string; url?: string; error?: string };
       if (data.ok) {
-        toast.success('Repository resurrected!', { 
+        toast.success('Repository resurrected!', {
           description: `Restored ${log.repoName} to GitHub successfully.`,
           action: { label: 'View', onClick: () => window.open(data.url, '_blank') }
         });
@@ -78,7 +78,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
     }
 
     const [owner, name] = manualRepo.split('/').map(s => s.trim());
-    const exists = logs.some(l => 
+    const exists = logs.some(l =>
       l.repoFullName.toLowerCase() === manualRepo.trim().toLowerCase() ||
       (l.repoName.toLowerCase() === name.toLowerCase() && l.owner.toLowerCase() === owner.toLowerCase())
     );
@@ -98,7 +98,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
     setShowManualAdd(false);
   };
 
-  const filteredLogs = logs.filter(log => 
+  const filteredLogs = logs.filter(log =>
     log.repoName.toLowerCase().includes(search.toLowerCase()) ||
     log.owner.toLowerCase().includes(search.toLowerCase())
   );
@@ -157,12 +157,12 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
             }}
           >
             {/* Header */}
-            <div style={{ 
+            <div style={{
               padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ 
+                <div style={{
                   width: '40px', height: '40px', borderRadius: '12px',
                   background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6'
@@ -174,9 +174,9 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                   <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>History of Telegram backups</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={onClose}
-                style={{ 
+                style={{
                   background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
                   cursor: 'pointer', padding: '8px'
                 }}
@@ -189,7 +189,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ position: 'relative' }}>
                 <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                <input 
+                <input
                   type="text"
                   placeholder="Search repository..."
                   value={search}
@@ -203,7 +203,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
               </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ 
+                <div style={{
                   flex: 1, padding: '10px', borderRadius: '10px',
                   background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
                   color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 500,
@@ -212,10 +212,10 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                   <History size={14} />
                   Action History
                 </div>
-                <button 
+                <button
                   onClick={() => setShowManualAdd(!showManualAdd)}
                   title="Manually log an old delete"
-                  style={{ 
+                  style={{
                     padding: '10px', borderRadius: '10px',
                     background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)',
                     color: '#3b82f6', cursor: 'pointer'
@@ -233,11 +233,11 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                     exit={{ opacity: 0, height: 0 }}
                     style={{ overflow: 'hidden' }}
                   >
-                    <div style={{ 
+                    <div style={{
                       padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)',
                       border: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '8px'
                     }}>
-                      <input 
+                      <input
                         type="text"
                         placeholder="owner/repository"
                         value={manualRepo}
@@ -247,9 +247,9 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                           fontSize: '13px', outline: 'none'
                         }}
                       />
-                      <button 
+                      <button
                         onClick={handleManualAdd}
-                        style={{ 
+                        style={{
                           padding: '4px 12px', background: '#3b82f6', border: 'none',
                           borderRadius: '6px', color: 'white', fontSize: '12px', fontWeight: 600,
                           cursor: 'pointer'
@@ -267,14 +267,14 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                   {filteredLogs.length} Records Found
                 </span>
                 {logs.length > 0 && (
-                  <button 
-                    onClick={() => { 
+                  <button
+                    onClick={() => {
                       toast.warning('Are you sure?', {
                         description: 'This will clear all backup history.',
                         action: { label: 'Clear', onClick: () => clearLogs() }
                       });
                     }}
-                    style={{ 
+                    style={{
                       background: 'none', border: 'none',
                       color: '#ef4444', fontSize: '12px', fontWeight: 500, cursor: 'pointer',
                       display: 'flex', alignItems: 'center', gap: '4px'
@@ -288,13 +288,13 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
             </div>
 
             {/* Scrollable History List */}
-            <div 
+            <div
               data-lenis-prevent
               style={{ flex: 1, overflowY: 'auto', padding: '0 20px 20px' }}
             >
               {filteredLogs.length === 0 ? (
-                <div style={{ 
-                  height: '100%', display: 'flex', flexDirection: 'column', 
+                <div style={{
+                  height: '100%', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', opacity: 0.3, textAlign: 'center'
                 }}>
                   <Shield size={48} style={{ marginBottom: '16px' }} />
@@ -320,7 +320,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                           <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>{log.repoName}</span>
                           <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{log.owner}</span>
                         </div>
-                        <div style={{ 
+                        <div style={{
                           padding: '4px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700,
                           textTransform: 'uppercase', letterSpacing: '0.05em',
                           background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '6px'
@@ -330,7 +330,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                         </div>
                       </div>
 
-                      <div style={{ 
+                      <div style={{
                         display: 'flex', alignItems: 'center', gap: '16px',
                         paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.03)'
                       }}>
@@ -359,7 +359,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                           {linkingId === log.id && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               <div style={{ display: 'flex', gap: '4px' }}>
-                                <input 
+                                <input
                                   type="text"
                                   placeholder="File ID"
                                   value={tempFileId}
@@ -371,13 +371,13 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                     borderRadius: '4px', width: '80px', outline: 'none'
                                   }}
                                 />
-                                <button 
+                                <button
                                   onClick={() => handleUpdateFileId(log.id)}
                                   style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', cursor: 'pointer' }}
                                 >
                                   OK
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => setLinkingId(null)}
                                   style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', cursor: 'pointer' }}
                                 >
@@ -394,7 +394,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                     if (data.ok) {
                                       const docs = data.documents || [];
                                       setRecentFiles(docs);
-                                      
+
                                       // Auto-link logic: match filenames to repo names for missing fileIds
                                       let linkedCount = 0;
                                       docs.forEach((doc: any) => {
@@ -405,10 +405,10 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                           }
                                         });
                                       });
-                                      
+
                                       if (linkedCount > 0) {
-                                        toast.success(`Auto-linked ${linkedCount} backups`, { 
-                                          description: 'Restored missing File IDs from bot history.' 
+                                        toast.success(`Auto-linked ${linkedCount} backups`, {
+                                          description: 'Restored missing File IDs from bot history.'
                                         });
                                       } else if (docs.length === 0) {
                                         toast.error('No files found', { description: 'Forward the ZIP to your bot first!' });
@@ -422,17 +422,17 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                     setIsSyncing(false);
                                   }
                                 }}
-                                style={{ 
-                                  background: 'none', border: '1px solid rgba(59,130,246,0.3)', 
-                                  color: '#3b82f6', fontSize: '9px', padding: '4px 6px', 
-                                  borderRadius: '4px', cursor: 'pointer' 
+                                style={{
+                                  background: 'none', border: '1px solid rgba(59,130,246,0.3)',
+                                  color: '#3b82f6', fontSize: '9px', padding: '4px 6px',
+                                  borderRadius: '4px', cursor: 'pointer'
                                 }}
                               >
                                 {isSyncing ? 'Scanning Bot...' : '🔄 Scan Bot for Forwarded ZIPs'}
                               </button>
 
                               {recentFiles.length > 0 && (
-                                <div style={{ 
+                                <div style={{
                                   marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '4px',
                                   maxHeight: '100px', overflowY: 'auto', padding: '4px',
                                   background: 'rgba(255,255,255,0.05)', borderRadius: '4px'
@@ -475,7 +475,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                   <Loader2 size={10} className="animate-spin" />
                                   Restoring...
                                 </>
-                                ) : (
+                              ) : (
                                 <>
                                   <RefreshCw size={10} />
                                   Resurrect
@@ -483,11 +483,11 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                               )}
                             </button>
                           )}
-                          <a 
+                          <a
                             href={`https://t.me/share/url?url=https://github.com/${log.repoFullName}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ 
+                            style={{
                               fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none',
                               display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500
                             }}
@@ -502,9 +502,9 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                 </div>
               )}
             </div>
-            
+
             {/* Footer / Hint */}
-            <div style={{ 
+            <div style={{
               padding: '16px 24px', background: 'rgba(255,255,255,0.02)',
               borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center'
             }}>

@@ -5,6 +5,8 @@ import { useSelectionStore } from '../../store/selectionStore';
 import { useAuthStore } from '../../store/authStore';
 import { CheckSquare, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { AnimatePresence } from 'framer-motion';
+import { CollaboratorModal } from './CollaboratorPanel';
 
 interface RepoListProps {
   repos: Repo[];
@@ -12,7 +14,7 @@ interface RepoListProps {
 }
 
 export const RepoList: React.FC<RepoListProps> = ({ repos, isLoading }) => {
-  const { selectedIds, toggleSelection, viewMode } = useSelectionStore();
+  const { selectedIds, toggleSelection, viewMode, activeInviteRepoId, setActiveInviteRepoId } = useSelectionStore();
   const { user } = useAuthStore();
 
   const handleSelectAll = (reposToSelect: Repo[]) => {
@@ -118,6 +120,21 @@ export const RepoList: React.FC<RepoListProps> = ({ repos, isLoading }) => {
       
       {/* Spacer for bottom action bar */}
       <div className="h-24" />
+
+      {/* Collaborator management modal for Grid layout */}
+      <AnimatePresence>
+        {viewMode === 'grid' && activeInviteRepoId !== null && (() => {
+          const activeInviteRepo = repos.find(r => r.id === activeInviteRepoId);
+          if (!activeInviteRepo) return null;
+          return (
+            <CollaboratorModal
+              owner={activeInviteRepo.owner.login}
+              repoName={activeInviteRepo.name}
+              onClose={() => setActiveInviteRepoId(null)}
+            />
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 };

@@ -130,6 +130,60 @@ export const leaveRepo = async (owner: string, repo: string, username: string) =
   });
 };
 
+export const fetchRepoCollaborators = async (owner: string, repo: string) => {
+  const client = getOctokit();
+  const { data } = await client.rest.repos.listCollaborators({
+    owner,
+    repo,
+  });
+  return data;
+};
+
+export const addRepoCollaborator = async (owner: string, repo: string, username: string) => {
+  const client = getOctokit();
+  await client.rest.repos.addCollaborator({
+    owner,
+    repo,
+    username,
+    permission: 'push',
+  });
+};
+
+export const removeRepoCollaborator = async (owner: string, repo: string, username: string) => {
+  const client = getOctokit();
+  await client.rest.repos.removeCollaborator({
+    owner,
+    repo,
+    username,
+  });
+};
+
+export const fetchRepoInvitations = async (owner: string, repo: string) => {
+  const client = getOctokit();
+  const { data } = await client.rest.repos.listInvitations({
+    owner,
+    repo,
+  });
+  return data;
+};
+
+export const cancelRepoInvitation = async (owner: string, repo: string, invitationId: number) => {
+  const client = getOctokit();
+  await client.rest.repos.deleteInvitation({
+    owner,
+    repo,
+    invitation_id: invitationId,
+  });
+};
+
+export const fetchAuthenticatedUserFollowing = async () => {
+  const client = getOctokit();
+  const { data } = await client.rest.users.listFollowedByAuthenticated({
+    per_page: 100,
+  });
+  return data;
+};
+
 export const downloadRepoZip = async (owner: string, repo: string, defaultBranch: string = 'main') => {
   const token = useAuthStore.getState().token;
   if (!token) return;

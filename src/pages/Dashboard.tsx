@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 export const Dashboard: React.FC = () => {
   const { repos, loading, error, fetchRepos } = useRepoStore();
   const { token } = useAuthStore();
-  const { searchQuery, visibilityFilter, sortBy } = useSelectionStore();
+  const { searchQuery, visibilityFilter, sortBy, discoveryCategory, favoritedIds } = useSelectionStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +24,13 @@ export const Dashboard: React.FC = () => {
 
   const filteredAndSortedRepos = useMemo(() => {
     let result = [...repos];
+
+    // Apply Discovery Category Filter
+    if (discoveryCategory === 'popular') {
+      result = result.filter(r => r.stargazers_count > 0);
+    } else if (discoveryCategory === 'favorites') {
+      result = result.filter(r => favoritedIds.includes(r.id));
+    }
 
     // Apply Search
     if (searchQuery) {
@@ -56,7 +63,10 @@ export const Dashboard: React.FC = () => {
 
     // Apply Sorting
     result.sort((a, b) => {
-      switch (sortBy) {
+      // If popular category is active and sorting is set to default (updated), sort by stars instead
+      const activeSortBy = (discoveryCategory === 'popular' && sortBy === 'updated') ? 'stars' : sortBy;
+      
+      switch (activeSortBy) {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'stars':
@@ -70,7 +80,7 @@ export const Dashboard: React.FC = () => {
     });
 
     return result;
-  }, [repos, searchQuery, visibilityFilter, sortBy]);
+  }, [repos, searchQuery, visibilityFilter, sortBy, discoveryCategory, favoritedIds]);
 
   if (error) {
     return (

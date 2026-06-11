@@ -18,6 +18,7 @@ import { TransferModal } from '../ui/TransferModal';
 import { transferRepo, type Repo } from '../../lib/github';
 import { useBackupStore } from '../../store/backupStore';
 import { toast } from 'sonner';
+import { FluidTabs, type TabItem } from '../ui/fluid-tabs';
 
 type ProgressStep = 'backup' | 'delete' | 'action';
 interface Progress { current: number; total: number; step: ProgressStep; repoName?: string; }
@@ -35,6 +36,7 @@ export const ActionBar: React.FC = () => {
   const [backupWarning, setBackupWarning] = useState<BackupWarning | null>(null);
   const [skipBackupForCurrent, setSkipBackupForCurrent] = useState<((v: boolean) => void) | null>(null);
   const { addLog, logs } = useBackupStore();
+  const [activeActionId, setActiveActionId] = useState<string>('visibility');
 
   const selectedRepos = repos.filter(r => selectedIds.has(r.id));
   const count = selectedIds.size;
@@ -324,13 +326,11 @@ export const ActionBar: React.FC = () => {
   const progressBg = progress?.step === 'backup' ? '#3b82f6' : progress?.step === 'delete' ? '#e13535' : 'rgba(255,255,255,0.5)';
   const progressLabel = progress?.step === 'backup' ? 'Backing up' : progress?.step === 'delete' ? 'Deleting' : 'Processing';
 
-  const ACTIONS = [
-    { label: 'Private',   icon: <Lock size={14} />,           fn: handleMakePrivate },
-    { label: 'Public',    icon: <Unlock size={14} />,         fn: handleMakePublic },
-    { label: 'Archive',   icon: <Archive size={14} />,        fn: handleArchive },
-    { label: 'Unarchive', icon: <ArchiveRestore size={14} />, fn: handleUnarchive },
-    { label: 'ZIP',       icon: <Download size={14} />,       fn: handleDownloadZip },
-  ];
+  const allPrivate = selectedRepos.length > 0 && selectedRepos.every(r => r.private);
+  const visibilityLabel = allPrivate ? 'Private' : 'Public';
+
+  const allArchived = selectedRepos.length > 0 && selectedRepos.every(r => r.archived);
+  const archiveLabel = allArchived ? 'Archived' : 'Active';
 
   const hasNonOwnedSelected = selectedRepos.some(r => r.owner.login !== user?.login);
   const hasOwnedSelected = selectedRepos.some(r => r.owner.login === user?.login);
@@ -348,6 +348,63 @@ export const ActionBar: React.FC = () => {
 
   const divStyle: React.CSSProperties = {
     width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)', flexShrink: 0,
+  };
+
+  const actionTabs: TabItem[] = [
+    { 
+      id: 'visibility', 
+      label: visibilityLabel, 
+      icon: (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={allPrivate ? 'lock' : 'unlock'}
+            initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
+            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+            exit={{ rotate: 90, scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-center shrink-0"
+          >
+            {allPrivate ? <Lock size={14} /> : <Unlock size={14} />}
+          </motion.div>
+        </AnimatePresence>
+      )
+    },
+    { 
+      id: 'archive', 
+      label: archiveLabel, 
+      icon: (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={allArchived ? 'archived' : 'active'}
+            initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
+            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+            exit={{ rotate: 90, scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-center shrink-0"
+          >
+            {allArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+          </motion.div>
+        </AnimatePresence>
+      )
+    },
+    { 
+      id: 'zip', 
+      label: 'ZIP', 
+      icon: <Download size={14} /> 
+    },
+  ];
+
+  const handleActionChange = (id: string) => {
+    setActiveActionId(id);
+    if (id === 'visibility') {
+      if (allPrivate) handleMakePublic();
+      else handleMakePrivate();
+    } else if (id === 'archive') {
+      if (allArchived) handleUnarchive();
+      else handleArchive();
+    } else if (id === 'zip') {
+      handleDownloadZip();
+    }
   };
 
   return (
@@ -416,33 +473,13 @@ export const ActionBar: React.FC = () => {
                 </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                  {ACTIONS.map(({ label, icon, fn }) => (
-                    <button
-                      key={label}
-                      onClick={fn}
-                      disabled={isProcessing}
-                      title={label}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '5px',
-                        padding: '5px 10px', borderRadius: '9999px',
-                        background: 'transparent', border: 'none',
-                        color: 'rgba(255,255,255,0.55)', fontSize: '12px', fontWeight: 500,
-                        cursor: 'pointer', whiteSpace: 'nowrap',
-                        transition: 'background 0.15s, color 0.15s',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
-                        e.currentTarget.style.color = 'rgba(255,255,255,0.95)';
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
-                      }}
-                    >
-                      {icon}
-                      <span className="hidden sm:inline">{label}</span>
-                    </button>
-                  ))}
+                  <FluidTabs
+                    tabs={actionTabs}
+                    activeId={activeActionId}
+                    onChange={handleActionChange}
+                    hideLabelOnMobile
+                    className="bg-transparent border-none p-0 gap-0 sm:gap-1 shadow-none"
+                  />
                 </div>
               )}
 
@@ -486,7 +523,7 @@ export const ActionBar: React.FC = () => {
                   }}
                 >
                   <Share2 size={14} />
-                  <span style={{ fontSize: '11px' }}>Share</span>
+                  <span className="hidden sm:inline" style={{ fontSize: '11px' }}>Share</span>
                 </button>
               )}
 

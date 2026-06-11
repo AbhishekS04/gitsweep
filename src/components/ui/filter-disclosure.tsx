@@ -88,13 +88,13 @@ export const FilterDisclosure: FC<FilterDisclosureProps> = ({
         <motion.button
           onClick={() => setOpen(!open)}
           whileTap={{ scale: 0.95 }}
-          className="z-50 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border/60 bg-background shadow-sm hover:bg-accent/45 text-foreground transition-all duration-200"
+          className="z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border/60 bg-background shadow-sm hover:bg-accent/45 text-foreground transition-all duration-200"
         >
           <PiFunnelSimpleBold className="h-4.5 w-4.5 text-foreground/85" />
         </motion.button>
 
         <div
-          className="z-30 -ml-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-border/40 bg-background/70 opacity-90 shadow-sm backdrop-blur-xs cursor-pointer hover:bg-accent/20 transition-all"
+          className="z-0 -ml-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-border/40 bg-background/70 opacity-90 shadow-sm backdrop-blur-xs cursor-pointer hover:bg-accent/20 transition-all"
           onClick={() => setOpen(!open)}
         >
           <AnimatePresence mode="popLayout" initial={false}>
@@ -119,7 +119,7 @@ export const FilterDisclosure: FC<FilterDisclosureProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 5 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2.5 z-50 flex w-[210px] flex-col gap-0.5 overflow-hidden rounded-xl border border-border/80 bg-background p-1.5 shadow-xl will-change-transform dark:border-border/40 dark:bg-neutral-900 origin-top-left sm:origin-top-right"
+            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2.5 z-20 flex w-[210px] flex-col gap-0.5 overflow-hidden rounded-xl border border-border/80 bg-background p-1.5 shadow-xl will-change-transform dark:border-border/40 dark:bg-neutral-900 origin-top-left sm:origin-top-right"
           >
             {/* Filter Section */}
             <div className="px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 select-none">

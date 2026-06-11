@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 import { cn } from '../../lib/utils';
 import {
   NavigationMenu,
@@ -9,13 +11,6 @@ import {
 } from './navigation-menu';
 import { Button } from './Button';
 import { Badge } from './badge';
-import { Sheet, SheetContent, SheetTrigger } from './sheet';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from './accordion';
 import {
   Cpu,
   Layers,
@@ -44,12 +39,68 @@ interface Navigation5Props {
 export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
   const { user, logout } = useAuthStore();
   const { logs } = useBackupStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const menuRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      gsap.killTweensOf([menuRef.current, backdropRef.current]);
+      
+      gsap.set(backdropRef.current, { display: 'block', opacity: 0 });
+      gsap.set(menuRef.current, { display: 'flex', opacity: 0, y: -20, scale: 0.95 });
+
+      gsap.to(backdropRef.current, {
+        opacity: 1,
+        duration: 0.25,
+        ease: 'power2.out'
+      });
+
+      gsap.to(menuRef.current, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.35,
+        ease: 'back.out(1.2)'
+      });
+    } else {
+      gsap.killTweensOf([menuRef.current, backdropRef.current]);
+      
+      gsap.to(backdropRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          gsap.set(backdropRef.current, { display: 'none' });
+        }
+      });
+
+      gsap.to(menuRef.current, {
+        opacity: 0,
+        y: -15,
+        scale: 0.95,
+        duration: 0.25,
+        ease: 'power2.in',
+        onComplete: () => {
+          gsap.set(menuRef.current, { display: 'none' });
+        }
+      });
+    }
+  }, [mobileMenuOpen]);
 
   return (
     <div className="relative w-full">
-      <div className="mx-auto flex max-w-6xl items-center justify-center px-4">
+      {/* Backdrop overlay */}
+      <div
+        ref={backdropRef}
+        onClick={() => setMobileMenuOpen(false)}
+        className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+        style={{ display: 'none' }}
+      />
+      <div className="mx-auto flex max-w-6xl items-center justify-center px-4 relative z-50">
         {/* Floating Navbar Pill with Glassmorphism */}
-        <div className="flex h-14 w-full max-w-full items-center justify-between rounded-full border border-white/10 bg-neutral-900/60 px-3 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-neutral-900/60">
+        <div className="flex h-14 w-full max-w-full items-center justify-between rounded-full border border-white/10 bg-neutral-900/60 px-3 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-neutral-900/60 relative z-50">
           
           {/* LEFT: Logo */}
           <div className="flex-1 flex items-center justify-start pl-2">
@@ -297,7 +348,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
 
             {user ? (
               <>
-                <div className="flex items-center gap-1.5 pr-2 border-r border-white/10 mr-1.5">
+                <div className="hidden lg:flex items-center gap-1.5 pr-2 border-r border-white/10 mr-1.5">
                   {/* Backup Vault Trigger */}
                   <button
                     onClick={onVaultOpen}
@@ -351,103 +402,87 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
 
                 {/* Mobile Menu Trigger */}
                 <div className="lg:hidden">
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 rounded-full text-neutral-400 hover:text-white hover:bg-white/5"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setMobileMenuOpen(v => !v)}
+                    className="h-9 w-9 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 relative z-50 cursor-pointer"
+                  >
+                    <Menu className="size-4.5" />
+                  </Button>
+
+                  {/* Dropdown panel */}
+                  <div
+                    ref={menuRef}
+                    className="absolute top-16 left-4 right-4 z-50 rounded-2xl border border-white/10 bg-neutral-950/95 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-2xl flex-col gap-4 font-mono text-neutral-200"
+                    style={{ display: 'none' }}
+                  >
+                    {/* Navigation Content */}
+                    <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-1">
+                      <a
+                        href="#"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-neutral-300 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-200"
                       >
-                        <Menu className="size-4.5" />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent
-                      side="right"
-                      className="flex w-[290px] flex-col gap-5 border-white/10 bg-neutral-950 p-5 font-mono text-neutral-200"
-                    >
-                      <div className="flex items-center gap-2 border-b border-white/5 pb-4">
-                        <div className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-white/10">
-                          <GithubIcon className="h-3.5 w-3.5 text-white" />
-                        </div>
-                        <span className="text-base font-bold text-white font-mono">
-                          GitSweep
-                        </span>
-                      </div>
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                        Overview
+                      </a>
 
-                      {/* Navigation Content */}
-                      <div className="flex flex-col gap-4 overflow-y-auto max-h-[60vh] pr-1">
-                        <a
-                          href="#"
-                          className="text-sm font-semibold text-neutral-300 hover:text-white transition-colors py-1"
-                        >
-                          Overview
-                        </a>
-
-                        <Accordion type="single" collapsible className="w-full">
-                          <AccordionItem value="operations" className="border-white/5">
-                            <AccordionTrigger className="justify-between py-1 text-sm font-semibold text-neutral-300 hover:text-white hover:no-underline">
-                              Operations
-                            </AccordionTrigger>
-                            <AccordionContent className="mt-2 ml-2 flex flex-col gap-2 border-l border-white/5 pb-0 pl-3 text-xs">
-                              <span className="text-[10px] text-neutral-500 uppercase tracking-wider pt-1">
-                                Automated Cleanup
-                              </span>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">Rulesets</a>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">Branches Sweep</a>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">Exposed Secrets</a>
-
-                              <span className="text-[10px] text-neutral-500 uppercase tracking-wider pt-2">
-                                Backups
-                              </span>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">Vault Downloader</a>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">Local Exports</a>
-                            </AccordionContent>
-                          </AccordionItem>
-
-                          <AccordionItem value="resources" className="border-white/5">
-                            <AccordionTrigger className="justify-between py-1 text-sm font-semibold text-neutral-300 hover:text-white hover:no-underline">
-                              Resources
-                            </AccordionTrigger>
-                            <AccordionContent className="mt-2 ml-2 flex flex-col gap-2 border-l border-white/5 pb-0 pl-3 text-xs">
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">Documentation</a>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">CLI Guide</a>
-                              <a href="#" className="text-neutral-400 hover:text-white py-0.5">API Rate Limits</a>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </div>
-
-                      {/* Profile & Logout Section at bottom */}
-                      <div className="mt-auto border-t border-white/5 pt-4 flex flex-col gap-3">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={user.avatar_url}
-                            alt={user.login}
-                            className="h-8 w-8 rounded-full ring-2 ring-white/10"
-                          />
-                          <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-white truncate max-w-[170px]">
-                              {user.login}
-                            </span>
-                            <span className="text-[9px] text-neutral-400">
-                              @{user.login}
-                            </span>
-                          </div>
-                        </div>
-
-                        <Button
+                      <div className="flex items-center gap-1">
+                        {/* Backup Vault Trigger */}
+                        <button
                           onClick={() => {
-                            logout();
-                            toast.success('Logged out successfully');
+                            setMobileMenuOpen(false);
+                            onVaultOpen();
                           }}
-                          className="w-full h-9 rounded-full bg-red-600/10 hover:bg-red-600 hover:text-white text-red-400 text-xs font-bold uppercase tracking-wider transition-all border border-red-500/20"
+                          title="Backup Vault"
+                          className={cn(
+                            "relative p-2 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer border-none bg-transparent focus:outline-none",
+                            vaultOpen && "text-white bg-white/5"
+                          )}
                         >
-                          <LogOut className="h-3.5 w-3.5 mr-1.5 inline-block" />
-                          Sign Out
-                        </Button>
+                          <History className="h-4 w-4" />
+                          {logs.length > 0 && !vaultOpen && (
+                            <span className="absolute top-1.5 right-1.5 block h-1.5 w-1.5 rounded-full bg-blue-500 ring-2 ring-neutral-900 animate-pulse" />
+                          )}
+                        </button>
+
+                        {/* Notification Bell */}
+                        <NotificationBell />
                       </div>
-                    </SheetContent>
-                  </Sheet>
+                    </div>
+
+                    {/* Profile & Logout Section at bottom */}
+                    <div className="border-t border-white/5 pt-4 flex flex-col gap-3">
+                      <div className="flex items-center gap-3 px-1">
+                        <img
+                          src={user.avatar_url}
+                          alt={user.login}
+                          className="h-8 w-8 rounded-full ring-2 ring-white/10"
+                        />
+                        <div className="flex flex-col select-none">
+                          <span className="text-xs font-semibold text-white leading-none">
+                            {user.login}
+                          </span>
+                          <span className="text-[9px] font-mono text-neutral-400 leading-none mt-1">
+                            @{user.login}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          logout();
+                          toast.success('Logged out successfully');
+                        }}
+                        className="w-full h-9 rounded-full bg-red-600/10 hover:bg-red-600 hover:text-white text-red-400 text-xs font-bold uppercase tracking-wider transition-all border border-red-500/20"
+                      >
+                        <LogOut className="h-3.5 w-3.5 mr-1.5 inline-block" />
+                        Sign Out
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (

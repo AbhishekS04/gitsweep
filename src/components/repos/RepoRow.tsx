@@ -7,6 +7,7 @@ import {
   Star, HardDrive, Clock, Users, UserPlus,
   Loader2, GitBranch, Globe, ExternalLink,
   MousePointer2,
+  Pin,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSelectionStore } from '../../store/selectionStore';
@@ -85,7 +86,7 @@ const DataRow = ({ icon, label, children }: { icon: React.ReactNode; label: stri
 export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, index }) => {
   const { user } = useAuthStore();
   const isContribution = repo.owner.login !== user?.login;
-  const { activeInviteRepoId, setActiveInviteRepoId, favoritedIds, toggleFavorite } = useSelectionStore();
+  const { activeInviteRepoId, setActiveInviteRepoId, pinnedIds, togglePin } = useSelectionStore();
 
   const isInviteOpen = activeInviteRepoId === repo.id;
   const toggleInvite = () => setActiveInviteRepoId(isInviteOpen ? null : repo.id);
@@ -93,7 +94,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
   const [collabCount, setCollabCount] = useState<number | null>(null);
   const [loadingCollabs, setLoadingCollabs] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const isStarred = favoritedIds.includes(repo.id);
+  const isPinned = pinnedIds.includes(repo.id);
   const ls = getLang(repo.language);
   const [g0, g1] = grad(repo.name);
 
@@ -130,10 +131,12 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
         layout
         transition={spring}
         className={cn(
-          "rounded-xl border transition-all duration-300 backdrop-blur-md overflow-hidden",
+          "group rounded-xl border transition-all duration-300 backdrop-blur-md overflow-hidden",
           isSelected
             ? "border-indigo-500 bg-indigo-500/5 shadow-[0_0_20px_rgba(99,102,241,0.15)]"
-            : "border-white/10 bg-zinc-950/80 shadow-md hover:border-white/20 hover:shadow-2xl hover:-translate-y-0.5"
+            : isPinned
+              ? "border-amber-500/30 bg-zinc-950/90 shadow-md hover:border-amber-500/50 hover:shadow-2xl hover:-translate-y-0.5"
+              : "border-white/10 bg-zinc-950/80 shadow-md hover:border-white/20 hover:shadow-2xl hover:-translate-y-0.5"
         )}
       >
         {/* ── Collapsed Header ── */}
@@ -163,8 +166,8 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
               />
             </div>
 
-            {/* Name only */}
-            <div className="flex items-baseline gap-2 min-w-0">
+            {/* Name + Pin */}
+            <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm font-semibold text-neutral-100 font-mono tracking-tight overflow-hidden text-ellipsis whitespace-nowrap">
                 {repo.name}
               </span>
@@ -173,6 +176,22 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                   by {repo.owner.login}
                 </span>
               )}
+              <motion.button
+                onClick={e => {
+                  e.stopPropagation();
+                  togglePin(repo.id);
+                }}
+                whileTap={{ scale: 0.8 }}
+                className={cn(
+                  "p-1 rounded-md transition-colors duration-200 shrink-0",
+                  isPinned 
+                    ? "text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20" 
+                    : "text-neutral-500 hover:text-neutral-300 hover:bg-white/5 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                )}
+                title={isPinned ? "Unpin repository" : "Pin repository"}
+              >
+                <Pin size={13} className={cn(isPinned && "fill-amber-400")} />
+              </motion.button>
             </div>
           </div>
 
@@ -255,15 +274,22 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
 
                 {/* Stars */}
                 <DataRow icon={<Star size={15} />} label="Stars">
+                  <span className="text-sm font-semibold text-neutral-300 font-mono">
+                    {repo.stargazers_count}
+                  </span>
+                </DataRow>
+
+                {/* Pin Status */}
+                <DataRow icon={<Pin size={15} />} label="Pin Status">
                   <motion.button
-                    onClick={e => { e.stopPropagation(); toggleFavorite(repo.id); }}
+                    onClick={e => { e.stopPropagation(); togglePin(repo.id); }}
                     whileTap={{ scale: 0.8 }}
                     className="inline-flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 outline-none select-none transition-colors duration-200"
-                    style={{ color: isStarred ? '#facc15' : '#d4d4d8' }}
+                    style={{ color: isPinned ? '#f59e0b' : '#d4d4d8' }}
                   >
-                    <Star size={14} style={{ fill: isStarred ? '#facc15' : 'none' }} />
-                    <span className="text-sm font-semibold font-mono">
-                      {repo.stargazers_count}
+                    <Pin size={14} className={cn(isPinned && "fill-amber-500")} />
+                    <span className="text-sm font-semibold">
+                      {isPinned ? 'Pinned to top' : 'Pin to top'}
                     </span>
                   </motion.button>
                 </DataRow>
@@ -319,6 +345,18 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                   >
                     <Globe size={13} /> Open on GitHub <ExternalLink size={10} />
                   </a>
+
+                  <button
+                    onClick={e => { e.stopPropagation(); togglePin(repo.id); }}
+                    className={cn(
+                      "flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 select-none cursor-pointer border",
+                      isPinned
+                        ? "border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 hover:text-amber-300 hover:border-amber-500/45"
+                        : "border-white/10 text-neutral-400 bg-white/5 hover:bg-white/10 hover:text-white hover:border-white/15"
+                    )}
+                  >
+                    <Pin size={13} className={cn(isPinned && "fill-amber-400")} /> {isPinned ? 'Pinned' : 'Pin'}
+                  </button>
 
                   {!isContribution && (
                     <button

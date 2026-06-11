@@ -12,7 +12,7 @@ interface SelectionState {
   viewMode: 'list' | 'grid';
   activeInviteRepoId: number | null;
   discoveryCategory: DiscoveryCategory;
-  favoritedIds: number[];
+  pinnedIds: number[];
   
   toggleSelection: (id: number) => void;
   selectAll: (ids: number[]) => void;
@@ -24,12 +24,12 @@ interface SelectionState {
   setViewMode: (mode: 'list' | 'grid') => void;
   setActiveInviteRepoId: (id: number | null) => void;
   setDiscoveryCategory: (category: DiscoveryCategory) => void;
-  toggleFavorite: (id: number) => void;
+  togglePin: (id: number) => void;
 }
 
-const getInitialFavorites = (): number[] => {
+const getInitialPins = (): number[] => {
   try {
-    const saved = localStorage.getItem('github-manager-favorites');
+    const saved = localStorage.getItem('github-manager-pins') || localStorage.getItem('github-manager-favorites');
     return saved ? JSON.parse(saved) : [];
   } catch {
     return [];
@@ -44,7 +44,7 @@ export const useSelectionStore = create<SelectionState>((set) => ({
   viewMode: 'list',
   activeInviteRepoId: null,
   discoveryCategory: 'all',
-  favoritedIds: getInitialFavorites(),
+  pinnedIds: getInitialPins(),
 
   toggleSelection: (id) =>
     set((state) => {
@@ -67,18 +67,18 @@ export const useSelectionStore = create<SelectionState>((set) => ({
   setViewMode: (viewMode) => set({ viewMode }),
   setActiveInviteRepoId: (activeInviteRepoId) => set({ activeInviteRepoId }),
   setDiscoveryCategory: (discoveryCategory) => set({ discoveryCategory }),
-  toggleFavorite: (id) =>
+  togglePin: (id) =>
     set((state) => {
-      const isFav = state.favoritedIds.includes(id);
-      const nextFavs = isFav
-        ? state.favoritedIds.filter((fid) => fid !== id)
-        : [...state.favoritedIds, id];
+      const isPinned = state.pinnedIds.includes(id);
+      const nextPins = isPinned
+        ? state.pinnedIds.filter((pid) => pid !== id)
+        : [...state.pinnedIds, id];
       try {
-        localStorage.setItem('github-manager-favorites', JSON.stringify(nextFavs));
+        localStorage.setItem('github-manager-pins', JSON.stringify(nextPins));
       } catch (e) {
-        console.warn('Could not save favorites to localStorage', e);
+        console.warn('Could not save pins to localStorage', e);
       }
-      return { favoritedIds: nextFavs };
+      return { pinnedIds: nextPins };
     }),
 }));
 

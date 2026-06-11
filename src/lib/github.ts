@@ -214,3 +214,13 @@ export const downloadRepoZip = async (owner: string, repo: string, defaultBranch
     throw error;
   }
 };
+
+export const fetchRepoLanguages = async (owner: string, repo: string): Promise<Record<string, number>> => {
+  const client = getOctokit();
+  const { data } = await client.rest.repos.listLanguages({
+    owner,
+    repo,
+  });
+  return data;
+};
+

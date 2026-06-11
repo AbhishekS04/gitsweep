@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Repo } from '../../lib/github';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,12 +7,36 @@ import {
   Lock, Unlock, Archive, GitFork,
   Star, HardDrive, Clock, Users, UserPlus,
   Loader2, GitBranch, Globe, ExternalLink,
-  MousePointer2,
+  Code2,
   Pin,
 } from 'lucide-react';
+import {
+  SiTypescript,
+  SiJavascript,
+  SiPython,
+  SiGo,
+  SiRust,
+  SiCss,
+  SiHtml5,
+  SiRuby,
+  SiGnubash,
+  SiCplusplus,
+  SiC,
+  SiVuedotjs,
+  SiSvelte,
+  SiReact,
+  SiSass,
+  SiPhp,
+  SiKotlin,
+  SiSwift,
+  SiDart,
+  SiDocker,
+} from 'react-icons/si';
+import { DiJava } from 'react-icons/di';
+import { TbBrandCSharp } from 'react-icons/tb';
 import { useAuthStore } from '../../store/authStore';
 import { useSelectionStore } from '../../store/selectionStore';
-import { fetchRepoCollaborators } from '../../lib/github';
+import { fetchRepoCollaborators, fetchRepoLanguages } from '../../lib/github';
 import { CollaboratorPanel } from './CollaboratorPanel';
 import { Checkbox } from '../ui/Checkbox';
 import { cn } from '../../lib/utils';
@@ -42,23 +67,66 @@ const formatDistanceToNow = (d: string) => {
 const formatSize = (kb: number) =>
   kb < 1024 ? `${kb} KB` : `${(kb / 1024).toFixed(1)} MB`;
 
-const LANG_COLORS: Record<string, { dot: string; bg: string; text: string; border: string }> = {
-  TypeScript:  { dot: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  text: '#60a5fa', border: 'rgba(59,130,246,0.25)' },
-  JavaScript:  { dot: '#facc15', bg: 'rgba(250,204,21,0.1)',  text: '#fde047', border: 'rgba(250,204,21,0.25)' },
-  Python:      { dot: '#6366f1', bg: 'rgba(99,102,241,0.1)',  text: '#a5b4fc', border: 'rgba(99,102,241,0.25)' },
-  Go:          { dot: '#22d3ee', bg: 'rgba(34,211,238,0.1)',  text: '#67e8f9', border: 'rgba(34,211,238,0.25)' },
-  Rust:        { dot: '#f97316', bg: 'rgba(249,115,22,0.1)',  text: '#fb923c', border: 'rgba(249,115,22,0.25)' },
-  Java:        { dot: '#ef4444', bg: 'rgba(239,68,68,0.1)',   text: '#f87171', border: 'rgba(239,68,68,0.25)' },
-  CSS:         { dot: '#a855f7', bg: 'rgba(168,85,247,0.1)',  text: '#c084fc', border: 'rgba(168,85,247,0.25)' },
-  HTML:        { dot: '#ea580c', bg: 'rgba(234,88,12,0.1)',   text: '#fb923c', border: 'rgba(234,88,12,0.25)' },
-  Ruby:        { dot: '#dc2626', bg: 'rgba(220,38,38,0.1)',   text: '#f87171', border: 'rgba(220,38,38,0.25)' },
-  Shell:       { dot: '#22c55e', bg: 'rgba(34,197,94,0.1)',   text: '#4ade80', border: 'rgba(34,197,94,0.25)' },
-  'C++':       { dot: '#ec4899', bg: 'rgba(236,72,153,0.1)',  text: '#f472b6', border: 'rgba(236,72,153,0.25)' },
-  'C#':        { dot: '#16a34a', bg: 'rgba(22,163,74,0.1)',   text: '#4ade80', border: 'rgba(22,163,74,0.25)' },
-  C:           { dot: '#6b7280', bg: 'rgba(107,114,128,0.1)', text: '#9ca3af', border: 'rgba(107,114,128,0.25)' },
+const getLanguageIcon = (lang: string | null, size: number = 18): React.ReactNode => {
+  if (!lang) return null;
+  const normalized = lang.toLowerCase();
+  switch (normalized) {
+    case 'typescript':
+      return <SiTypescript size={size} className="shrink-0 text-[#3178c6]" />;
+    case 'javascript':
+      return <SiJavascript size={size} className="shrink-0 text-[#f7df1e]" />;
+    case 'python':
+      return <SiPython size={size} className="shrink-0 text-[#3776ab]" />;
+    case 'go':
+      return <SiGo size={size} className="shrink-0 text-[#00add8]" />;
+    case 'rust':
+      return <SiRust size={size} className="shrink-0 text-[#ea4a2b]" />;
+    case 'java':
+      return <DiJava size={size + 2} className="shrink-0 text-[#f89820]" />;
+    case 'css':
+      return <SiCss size={size} className="shrink-0 text-[#1572b6]" />;
+    case 'html':
+      return <SiHtml5 size={size} className="shrink-0 text-[#e34f26]" />;
+    case 'ruby':
+      return <SiRuby size={size} className="shrink-0 text-[#cc342d]" />;
+    case 'shell':
+    case 'bash':
+      return <SiGnubash size={size} className="shrink-0 text-[#4eaa25]" />;
+    case 'c++':
+      return <SiCplusplus size={size} className="shrink-0 text-[#00599c]" />;
+    case 'c#':
+      return <TbBrandCSharp size={size + 1} className="shrink-0 text-[#239120]" />;
+    case 'c':
+      return <SiC size={size} className="shrink-0 text-[#a8b9cc]" />;
+    case 'vue':
+      return <SiVuedotjs size={size} className="shrink-0 text-[#41b883]" />;
+    case 'svelte':
+      return <SiSvelte size={size} className="shrink-0 text-[#ff3e00]" />;
+    case 'react':
+    case 'jsx':
+    case 'tsx':
+      return <SiReact size={size} className="shrink-0 text-[#61dafb]" />;
+    case 'sass':
+    case 'scss':
+      return <SiSass size={size} className="shrink-0 text-[#cc6699]" />;
+    case 'php':
+      return <SiPhp size={size} className="shrink-0 text-[#777bb4]" />;
+    case 'kotlin':
+      return <SiKotlin size={size} className="shrink-0 text-[#7f52ff]" />;
+    case 'swift':
+      return <SiSwift size={size} className="shrink-0 text-[#f05138]" />;
+    case 'dart':
+      return <SiDart size={size} className="shrink-0 text-[#0175c2]" />;
+    case 'dockerfile':
+    case 'docker':
+      return <SiDocker size={size} className="shrink-0 text-[#2496ed]" />;
+    default:
+      return null;
+  }
 };
-const getLang = (l: string | null) =>
-  l && LANG_COLORS[l] ? LANG_COLORS[l] : { dot: '#6b7280', bg: 'rgba(107,114,128,0.1)', text: '#9ca3af', border: 'rgba(107,114,128,0.25)' };
+
+
+
 
 const GRADS = [
   ['#6366f1','#8b5cf6'], ['#3b82f6','#06b6d4'], ['#10b981','#22d3ee'],
@@ -94,8 +162,10 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
   const [collabCount, setCollabCount] = useState<number | null>(null);
   const [loadingCollabs, setLoadingCollabs] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [languages, setLanguages] = useState<string[]>(repo.language ? [repo.language] : []);
+  const [loadingLanguages, setLoadingLanguages] = useState(false);
+  const [hasFetchedLanguages, setHasFetchedLanguages] = useState(false);
   const isPinned = pinnedIds.includes(repo.id);
-  const ls = getLang(repo.language);
   const [g0, g1] = grad(repo.name);
 
   useEffect(() => {
@@ -110,6 +180,23 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
     })();
     return () => { alive = false; };
   }, [repo.owner.login, repo.name]);
+
+  useEffect(() => {
+    if (!isExpanded || hasFetchedLanguages) return;
+    let alive = true;
+    (async () => {
+      setLoadingLanguages(true);
+      try {
+        const d = await fetchRepoLanguages(repo.owner.login, repo.name);
+        if (alive) {
+          setLanguages(Object.keys(d));
+          setHasFetchedLanguages(true);
+        }
+      } catch { /* silent */ }
+      finally { if (alive) setLoadingLanguages(false); }
+    })();
+    return () => { alive = false; };
+  }, [isExpanded, repo.owner.login, repo.name, hasFetchedLanguages]);
 
   useEffect(() => {
     const h = (e: Event) => {
@@ -245,20 +332,39 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                   </DataRow>
                 )}
 
-                {/* Language */}
-                {repo.language && (
-                  <DataRow icon={<MousePointer2 size={15} />} label="Language">
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      borderRadius: 999, border: `1px solid ${ls.border}`,
-                      padding: '2px 10px', fontSize: 12, fontWeight: 600,
-                      color: ls.text, background: ls.bg,
-                    }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: ls.dot }} />
-                      {repo.language}
-                    </span>
-                  </DataRow>
-                )}
+                {/* Languages */}
+                {(() => {
+                  const mappedLanguages = languages
+                    .map(lang => ({ name: lang, icon: getLanguageIcon(lang, 18) }))
+                    .filter((item): item is { name: string; icon: React.ReactNode } => item.icon !== null);
+
+                  return mappedLanguages.length > 0 && (
+                    <DataRow icon={<Code2 size={15} />} label="Languages">
+                      <div className="flex items-center gap-2.5 justify-end select-none">
+                        {loadingLanguages && languages.length === 1 && (
+                          <Loader2 size={12} className="animate-spin text-neutral-500 mr-1" />
+                        )}
+                        {mappedLanguages.slice(0, 5).map((item) => (
+                          <span
+                            key={item.name}
+                            title={item.name}
+                            className="inline-flex items-center justify-center hover:scale-115 transition-transform duration-200 cursor-help shrink-0"
+                          >
+                            {item.icon}
+                          </span>
+                        ))}
+                        {mappedLanguages.length > 5 && (
+                          <span
+                            title={mappedLanguages.slice(5).map(i => i.name).join(', ')}
+                            className="text-[11px] font-bold text-neutral-400 font-mono select-none hover:text-neutral-200 transition-colors duration-200 cursor-help shrink-0"
+                          >
+                            +{mappedLanguages.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    </DataRow>
+                  );
+                })()}
 
                 {/* Stars */}
                 <DataRow icon={<Star size={15} />} label="Stars">

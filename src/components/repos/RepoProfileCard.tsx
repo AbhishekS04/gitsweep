@@ -6,7 +6,7 @@ import {
   Lock, Unlock, Archive, GitFork,
   Star, HardDrive, Clock, Users, UserPlus,
   Loader2, GitBranch, Globe, ExternalLink,
-  MousePointer2,
+  ExternalLink as LiveLinkIcon, MousePointer2,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSelectionStore } from '../../store/selectionStore';
@@ -14,15 +14,14 @@ import { fetchRepoCollaborators } from '../../lib/github';
 import { CollaboratorPanel } from './CollaboratorPanel';
 import { Checkbox } from '../ui/Checkbox';
 
-interface RepoItemProps {
+interface RepoProfileCardProps {
   repo: Repo;
   isSelected: boolean;
   onToggle: (id: number) => void;
   index: number;
 }
 
-/* ── helpers ────────────────────────────────────────── */
-
+/* ── helpers (same as RepoRow) ── */
 const formatDistanceToNow = (d: string) => {
   const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
   if (s < 60) return `${s}s ago`;
@@ -36,9 +35,7 @@ const formatDistanceToNow = (d: string) => {
   if (mo < 12) return `${mo}mo ago`;
   return `${Math.floor(mo / 12)}y ago`;
 };
-
-const formatSize = (kb: number) =>
-  kb < 1024 ? `${kb} KB` : `${(kb / 1024).toFixed(1)} MB`;
+const formatSize = (kb: number) => kb < 1024 ? `${kb} KB` : `${(kb / 1024).toFixed(1)} MB`;
 
 const LANG_COLORS: Record<string, { dot: string; bg: string; text: string; border: string }> = {
   TypeScript:  { dot: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  text: '#60a5fa', border: 'rgba(59,130,246,0.25)' },
@@ -67,10 +64,7 @@ const grad = (name: string) => GRADS[name.charCodeAt(0) % GRADS.length];
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 } as const;
 
-/* ── DataRow ── */
-const DataRow = ({
-  icon, label, children,
-}: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
+const DataRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '5px 0' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#71717a', flexShrink: 0 }}>
       {icon}
@@ -81,9 +75,9 @@ const DataRow = ({
 );
 
 /* ─────────────────────────────────────────────────────
-   RepoRow — list-view card (ProfileCard style)
+   RepoProfileCard — grid-view card (ProfileCard style)
 ───────────────────────────────────────────────────── */
-export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, index }) => {
+export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelected, onToggle, index }) => {
   const { user } = useAuthStore();
   const isContribution = repo.owner.login !== user?.login;
   const { activeInviteRepoId, setActiveInviteRepoId, favoritedIds, toggleFavorite } = useSelectionStore();
@@ -123,18 +117,18 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.02, 0.25), duration: 0.25, type: 'spring', stiffness: 200, damping: 22 }}
+      transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.28, type: 'spring', stiffness: 200, damping: 22 }}
     >
       <motion.div
         layout
         transition={spring}
         style={{
-          borderRadius: 14,
-          border: isSelected ? '1.5px solid rgba(99,102,241,0.55)' : '1.5px solid rgba(255,255,255,0.07)',
-          background: isSelected ? 'rgba(99,102,241,0.06)' : 'rgba(15,15,19,0.9)',
-          boxShadow: isSelected ? '0 0 20px rgba(99,102,241,0.1)' : '0 1px 8px rgba(0,0,0,0.3)',
+          borderRadius: 16,
+          border: isSelected ? '1.5px solid rgba(99,102,241,0.6)' : '1.5px solid rgba(255,255,255,0.07)',
+          background: isSelected ? 'rgba(99,102,241,0.06)' : 'rgba(18,18,22,0.9)',
+          boxShadow: isSelected ? '0 0 24px rgba(99,102,241,0.12)' : '0 2px 12px rgba(0,0,0,0.25)',
           overflow: 'hidden',
           backdropFilter: 'blur(12px)',
         }}
@@ -143,19 +137,19 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 12, padding: '13px 14px', cursor: 'pointer',
+            gap: 12, padding: '14px 14px', cursor: 'pointer',
           }}
           onClick={() => setIsExpanded(v => !v)}
         >
           {/* Left: checkbox + avatar + name */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
             <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
               <Checkbox checked={isSelected} onCheckedChange={() => onToggle(repo.id)} />
             </div>
 
             {/* GitHub owner avatar */}
             <div style={{
-              width: 36, height: 36, borderRadius: 10,
+              width: 38, height: 38, borderRadius: 10,
               flexShrink: 0, overflow: 'hidden',
               boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
               background: `linear-gradient(135deg, ${g0}, ${g1})`,
@@ -175,17 +169,11 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
               textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {repo.name}
-              {isContribution && (
-                <span style={{ fontSize: 11, color: '#52525b', fontWeight: 400, marginLeft: 6 }}>
-                  by {repo.owner.login}
-                </span>
-              )}
             </span>
           </div>
 
-          {/* Right: mini sparkline + chevron */}
+          {/* Right: sparkline + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            {/* Sparkline (decorative, same as original) */}
             <div style={{ width: 64 }}>
               <svg viewBox="0 0 80 20" fill="none" style={{ width: '100%', height: 'auto' }}>
                 <path
@@ -196,8 +184,6 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                 />
               </svg>
             </div>
-
-            {/* Chevron */}
             <motion.div
               animate={{ rotate: isExpanded ? 0 : 180 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
@@ -228,10 +214,10 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                 overflow: 'hidden',
               }}
             >
-              <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {/* Live Link — only shown if repo.homepage is set */}
                 {repo.homepage && (
-                  <DataRow icon={<ExternalLink size={15} />} label="Live link">
+                  <DataRow icon={<LiveLinkIcon size={15} />} label="Live link">
                     <a
                       href={repo.homepage.startsWith('http') ? repo.homepage : `https://${repo.homepage}`}
                       target="_blank"
@@ -246,7 +232,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                         color: '#a1a1aa',
                         background: 'rgba(255,255,255,0.04)',
                         textDecoration: 'none',
-                        maxWidth: 200, overflow: 'hidden',
+                        maxWidth: 180, overflow: 'hidden',
                         textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         transition: 'all 0.15s',
                       }}
@@ -303,8 +289,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
                       cursor: 'pointer', background: 'transparent', border: 'none',
-                      padding: 0, outline: 'none',
-                      color: isStarred ? '#facc15' : '#d4d4d8',
+                      padding: 0, outline: 'none', color: isStarred ? '#facc15' : '#d4d4d8',
                     }}
                   >
                     <Star size={14} style={{ fill: isStarred ? '#facc15' : 'none' }} />
@@ -331,7 +316,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                   </span>
                 </DataRow>
 
-                {/* Default branch */}
+                {/* Branch */}
                 <DataRow icon={<GitBranch size={15} />} label="Default branch">
                   <span style={{
                     fontSize: 12, fontWeight: 600, fontFamily: 'monospace',
@@ -350,7 +335,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                   </span>
                 </DataRow>
 
-                {/* Archived / Fork badges */}
+                {/* Archived / Fork */}
                 {(repo.archived || repo.fork) && (
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     {repo.archived && (
@@ -376,6 +361,14 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                   </div>
                 )}
 
+                {/* Contribution owner */}
+                {isContribution && (
+                  <div style={{ marginTop: 10 }}>
+                    <span style={{ fontSize: 12, color: '#52525b' }}>Owner: </span>
+                    <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace' }}>{repo.owner.login}</span>
+                  </div>
+                )}
+
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                   <a
@@ -386,14 +379,14 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                     style={{
                       flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       gap: 6, borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)',
-                      padding: '8px 14px', fontSize: 12, fontWeight: 600,
+                      padding: '8px 12px', fontSize: 12, fontWeight: 600,
                       color: '#a1a1aa', background: 'rgba(255,255,255,0.04)',
                       textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s',
                     }}
                     onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.09)'; el.style.color = '#e4e4e7'; }}
                     onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#a1a1aa'; }}
                   >
-                    <Globe size={13} /> Open on GitHub <ExternalLink size={11} />
+                    <Globe size={13} /> GitHub <ExternalLink size={11} />
                   </a>
 
                   {!isContribution && (
@@ -402,12 +395,12 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                       style={{
                         flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         gap: 6, borderRadius: 9, border: '1px solid rgba(99,102,241,0.35)',
-                        padding: '8px 14px', fontSize: 12, fontWeight: 600,
+                        padding: '8px 12px', fontSize: 12, fontWeight: 600,
                         color: '#818cf8', background: 'rgba(99,102,241,0.08)',
                         cursor: 'pointer', transition: 'all 0.15s',
                       }}
-                      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(99,102,241,0.15)'; }}
-                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(99,102,241,0.08)'; }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.15)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.08)'; }}
                     >
                       <UserPlus size={13} /> Invite
                     </button>
@@ -445,5 +438,3 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
     </motion.div>
   );
 };
-
-export { RepoRow as RepoCard };

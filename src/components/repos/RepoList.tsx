@@ -1,5 +1,6 @@
 import React from 'react';
-import { RepoRow, RepoCard } from './RepoRow';
+import { RepoRow } from './RepoRow';
+import { RepoProfileCard } from './RepoProfileCard';
 import type { Repo } from '../../lib/github';
 import { useSelectionStore } from '../../store/selectionStore';
 import { useAuthStore } from '../../store/authStore';
@@ -103,12 +104,12 @@ export const RepoList: React.FC<RepoListProps> = ({ repos, isLoading }) => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3">
               {section.repos.map((repo, index) => (
-                <RepoCard 
-                  key={repo.id} 
-                  repo={repo} 
-                  isSelected={selectedIds.has(repo.id)} 
+                <RepoProfileCard
+                  key={repo.id}
+                  repo={repo}
+                  isSelected={selectedIds.has(repo.id)}
                   onToggle={toggleSelection}
                   index={index}
                 />

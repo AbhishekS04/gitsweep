@@ -16,7 +16,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (!token) {
-      navigate('/login');
+      navigate('/');
       return;
     }
     fetchRepos();

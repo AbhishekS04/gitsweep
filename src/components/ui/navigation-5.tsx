@@ -13,6 +13,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useBackupStore } from '../../store/backupStore';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { loginWithGitHub } from '../../lib/auth';
 
 interface Navigation5Props {
   onVaultOpen: () => void;
@@ -240,12 +241,12 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
                 </div>
               </>
             ) : (
-              <a
-                href="/login"
-                className="hidden rounded-full bg-white px-5 py-1.5 text-xs font-bold text-neutral-900 transition-all hover:bg-neutral-200 md:block dark:bg-white dark:text-neutral-900"
+              <button
+                onClick={loginWithGitHub}
+                className="hidden rounded-full bg-white px-5 py-1.5 text-xs font-bold text-neutral-900 transition-all hover:bg-neutral-200 md:block dark:bg-white dark:text-neutral-900 cursor-pointer"
               >
                 Sign In
-              </a>
+              </button>
             )}
           </div>
         </div>

@@ -78,8 +78,8 @@ export const OAuthCallback: React.FC = () => {
       <div className="flex min-h-[80vh] flex-col items-center justify-center space-y-4">
         <div className="text-destructive font-mono font-medium text-lg">Authentication Failed</div>
         <div className="text-muted-foreground">{error}</div>
-        <button onClick={() => navigate('/login')} className="text-primary hover:underline">
-          Return to Login
+        <button onClick={() => navigate('/')} className="text-primary hover:underline">
+          Return to Home
         </button>
       </div>
     );

@@ -418,7 +418,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
                     style={{ display: 'none' }}
                   >
                     {/* Navigation Content */}
-                    <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-1">
+                    <div className="flex items-center justify-between">
                       <a
                         href="#"
                         onClick={() => setMobileMenuOpen(false)}
@@ -453,7 +453,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
                     </div>
 
                     {/* Profile & Logout Section at bottom */}
-                    <div className="border-t border-white/5 pt-4 flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 mt-2">
                       <div className="flex items-center gap-3 px-1">
                         <img
                           src={user.avatar_url}

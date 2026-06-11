@@ -13,7 +13,6 @@ export const FilterBar: React.FC<{ totalCount: number }> = ({ totalCount }) => {
     searchQuery, setSearchQuery, 
     visibilityFilter, setVisibilityFilter,
     sortBy, setSortBy,
-    viewMode, setViewMode
   } = useSelectionStore();
 
   const items = [
@@ -35,8 +34,6 @@ export const FilterBar: React.FC<{ totalCount: number }> = ({ totalCount }) => {
           <MorphingDiscoveryBar
             value={searchQuery}
             onChange={setSearchQuery}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
             className="flex-grow sm:flex-grow-0"
           />
 

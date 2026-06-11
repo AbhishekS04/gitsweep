@@ -84,32 +84,31 @@ export const FilterDisclosure: FC<FilterDisclosureProps> = ({
       </AnimatePresence>
 
       {/* Trigger Button and Active Icon row */}
-      <div className="flex items-center">
-        <motion.button
-          onClick={() => setOpen(!open)}
-          whileTap={{ scale: 0.95 }}
-          className="z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border/60 bg-background shadow-sm hover:bg-accent/45 text-foreground transition-all duration-200"
-        >
-          <PiFunnelSimpleBold className="h-4.5 w-4.5 text-foreground/85" />
-        </motion.button>
-
-        <div
-          className="z-0 -ml-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-border/40 bg-background/70 opacity-90 shadow-sm backdrop-blur-xs cursor-pointer hover:bg-accent/20 transition-all"
-          onClick={() => setOpen(!open)}
-        >
+      <motion.button
+        onClick={() => setOpen(!open)}
+        whileTap={{ scale: 0.97 }}
+        className="flex h-9 items-center gap-2 px-2.5 rounded-full border border-border/60 bg-background/80 backdrop-blur-md shadow-sm hover:bg-accent/45 text-foreground transition-all duration-200 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
+      >
+        <PiFunnelSimpleBold className="h-4 w-4 text-foreground/80 shrink-0" />
+        <div className="w-[1px] h-3.5 bg-border/60 shrink-0" />
+        <div className="flex items-center gap-1.5 min-w-0">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={active}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.6 }}
+              initial={{ opacity: 0, scale: 0.6, y: -2 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.6, y: 2 }}
               transition={{ duration: 0.2 }}
+              className="flex items-center justify-center shrink-0"
             >
-              <ActiveIcon className="h-4 w-4 text-primary shrink-0" />
+              <ActiveIcon className="h-3.5 w-3.5 text-primary shrink-0" />
             </motion.div>
           </AnimatePresence>
+          <span className="text-[10px] font-bold uppercase font-mono tracking-tight text-foreground/75 shrink-0 hidden sm:inline">
+            {activeItem?.label || "All"}
+          </span>
         </div>
-      </div>
+      </motion.button>
 
       {/* Dropdown Panel */}
       <AnimatePresence>
@@ -119,7 +118,7 @@ export const FilterDisclosure: FC<FilterDisclosureProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 5 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2.5 z-20 flex w-[210px] flex-col gap-0.5 overflow-hidden rounded-xl border border-border/80 bg-background p-1.5 shadow-xl will-change-transform dark:border-border/40 dark:bg-neutral-900 origin-top-left sm:origin-top-right"
+            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2.5 z-50 flex w-[210px] flex-col gap-0.5 overflow-hidden rounded-xl border border-border/80 bg-background p-1.5 shadow-xl will-change-transform dark:border-border/40 dark:bg-neutral-900 origin-top-left sm:origin-top-right"
           >
             {/* Filter Section */}
             <div className="px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 select-none">

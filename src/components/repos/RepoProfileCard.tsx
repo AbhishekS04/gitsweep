@@ -162,27 +162,11 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
               />
             </div>
 
-            {/* Name + Pin */}
+            {/* Name */}
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
               <span className="text-sm font-semibold text-neutral-100 font-mono tracking-tight overflow-hidden text-ellipsis whitespace-nowrap">
                 {repo.name}
               </span>
-              <motion.button
-                onClick={e => {
-                  e.stopPropagation();
-                  togglePin(repo.id);
-                }}
-                whileTap={{ scale: 0.8 }}
-                className={cn(
-                  "p-1 rounded-md transition-colors duration-200 shrink-0",
-                  isPinned 
-                    ? "text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20" 
-                    : "text-neutral-500 hover:text-neutral-300 hover:bg-white/5 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                )}
-                title={isPinned ? "Unpin repository" : "Pin repository"}
-              >
-                <Pin size={13} className={cn(isPinned && "fill-amber-400")} />
-              </motion.button>
             </div>
           </div>
 

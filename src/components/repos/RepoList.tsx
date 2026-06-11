@@ -1,13 +1,10 @@
 import React from 'react';
 import { RepoRow } from './RepoRow';
-import { RepoProfileCard } from './RepoProfileCard';
 import type { Repo } from '../../lib/github';
 import { useSelectionStore } from '../../store/selectionStore';
 import { useAuthStore } from '../../store/authStore';
 import { CheckSquare, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { AnimatePresence } from 'framer-motion';
-import { CollaboratorModal } from './CollaboratorPanel';
 
 interface RepoListProps {
   repos: Repo[];
@@ -15,7 +12,7 @@ interface RepoListProps {
 }
 
 export const RepoList: React.FC<RepoListProps> = ({ repos, isLoading }) => {
-  const { selectedIds, toggleSelection, viewMode, activeInviteRepoId, setActiveInviteRepoId } = useSelectionStore();
+  const { selectedIds, toggleSelection } = useSelectionStore();
   const { user } = useAuthStore();
 
   const handleSelectAll = (reposToSelect: Repo[]) => {
@@ -91,51 +88,22 @@ export const RepoList: React.FC<RepoListProps> = ({ repos, isLoading }) => {
             </Button>
           </div>
 
-          {viewMode === 'list' ? (
-            <div className="flex flex-col gap-2">
-              {section.repos.map((repo, index) => (
-                <RepoRow 
-                  key={repo.id} 
-                  repo={repo} 
-                  isSelected={selectedIds.has(repo.id)} 
-                  onToggle={toggleSelection}
-                  index={index}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3">
-              {section.repos.map((repo, index) => (
-                <RepoProfileCard
-                  key={repo.id}
-                  repo={repo}
-                  isSelected={selectedIds.has(repo.id)}
-                  onToggle={toggleSelection}
-                  index={index}
-                />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-2">
+            {section.repos.map((repo, index) => (
+              <RepoRow 
+                key={repo.id} 
+                repo={repo} 
+                isSelected={selectedIds.has(repo.id)} 
+                onToggle={toggleSelection}
+                index={index}
+              />
+            ))}
+          </div>
         </div>
       ))}
       
       {/* Spacer for bottom action bar */}
       <div className="h-24" />
-
-      {/* Collaborator management modal for Grid layout */}
-      <AnimatePresence>
-        {viewMode === 'grid' && activeInviteRepoId !== null && (() => {
-          const activeInviteRepo = repos.find(r => r.id === activeInviteRepoId);
-          if (!activeInviteRepo) return null;
-          return (
-            <CollaboratorModal
-              owner={activeInviteRepo.owner.login}
-              repoName={activeInviteRepo.name}
-              onClose={() => setActiveInviteRepoId(null)}
-            />
-          );
-        })()}
-      </AnimatePresence>
     </div>
   );
 };

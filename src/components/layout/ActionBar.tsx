@@ -5,20 +5,22 @@ import { useRepoStore } from '../../store/repoStore';
 import { useAuthStore } from '../../store/authStore';
 import {
   updateRepoVisibility, updateRepoArchived,
-  downloadRepoZip, deleteRepo, leaveRepo,
+  downloadRepoZip, deleteRepo, leaveRepo, renameRepo,
 } from '../../lib/github';
 import {
   Download, Lock, Unlock, Archive, ArchiveRestore,
-  Trash2, X, Send, LogOut, Share2,
+  Trash2, X, Send, LogOut, Share2, Edit2,
 } from 'lucide-react';
 import { backupRepoToTelegram, type TelegramBackupResult } from '../../lib/telegram';
 import { DeleteModal } from '../ui/DeleteModal';
 import { LeaveModal } from '../ui/LeaveModal';
 import { TransferModal } from '../ui/TransferModal';
+import { RenameModal } from '../ui/RenameModal';
 import { transferRepo, type Repo } from '../../lib/github';
 import { useBackupStore } from '../../store/backupStore';
 import { toast } from 'sonner';
 import { FluidTabs, type TabItem } from '../ui/fluid-tabs';
+import { cn } from '../../lib/utils';
 
 type ProgressStep = 'backup' | 'delete' | 'action';
 interface Progress { current: number; total: number; step: ProgressStep; repoName?: string; }
@@ -33,6 +35,7 @@ export const ActionBar: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [backupWarning, setBackupWarning] = useState<BackupWarning | null>(null);
   const [skipBackupForCurrent, setSkipBackupForCurrent] = useState<((v: boolean) => void) | null>(null);
   const { addLog, logs } = useBackupStore();
@@ -323,6 +326,23 @@ export const ActionBar: React.FC = () => {
     deselectAll();
   };
 
+  const handleRename = async (newName: string) => {
+    if (selectedRepos.length !== 1) return;
+    const repo = selectedRepos[0];
+    try {
+      await renameRepo(repo.owner.login, repo.name, newName);
+      updateRepoLocally(repo.id, {
+        name: newName,
+        full_name: `${repo.owner.login}/${newName}`,
+      });
+      toast.success(`Repository renamed to ${newName}`);
+      deselectAll();
+    } catch (err: any) {
+      toast.error('Rename failed', { description: err.message || 'Check your permissions.' });
+      throw err;
+    }
+  };
+
   const progressBg = progress?.step === 'backup' ? '#3b82f6' : progress?.step === 'delete' ? '#e13535' : 'rgba(255,255,255,0.5)';
   const progressLabel = progress?.step === 'backup' ? 'Backing up' : progress?.step === 'delete' ? 'Deleting' : 'Processing';
 
@@ -335,20 +355,6 @@ export const ActionBar: React.FC = () => {
   const hasNonOwnedSelected = selectedRepos.some(r => r.owner.login !== user?.login);
   const hasOwnedSelected = selectedRepos.some(r => r.owner.login === user?.login);
   const deletableCount = selectedRepos.filter(r => r.owner.login === user?.login).length;
-
-  /* shared pill style — matches the floating nav */
-  const pillStyle: React.CSSProperties = {
-    background: 'rgba(10,10,10,0.82)',
-    backdropFilter: 'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
-    border: '1px solid rgba(255,255,255,0.09)',
-    borderRadius: '9999px',
-    boxShadow: '0 16px 48px rgba(0,0,0,0.55)',
-  };
-
-  const divStyle: React.CSSProperties = {
-    width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)', flexShrink: 0,
-  };
 
   const actionTabs: TabItem[] = [
     { 
@@ -417,160 +423,122 @@ export const ActionBar: React.FC = () => {
             animate={{ y: 0,  opacity: 1 }}
             exit={{ y: 72,  opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              left: 0,
-              right: 0,
-              zIndex: 50,
-              display: 'flex',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-            }}
+            className="fixed bottom-5 left-0 right-0 z-50 flex justify-center pointer-events-none"
           >
-            <div style={{ pointerEvents: 'auto', maxWidth: 'calc(100vw - 32px)' }}>
-            <div style={{ ...pillStyle, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              <style>{`
-                ::-webkit-scrollbar { display: none; }
-              `}</style>
-
-              {/* Count badge */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span style={{
-                  padding: '3px 10px', borderRadius: '9999px', fontSize: '11px',
-                  fontWeight: 600, fontFamily: 'JetBrains Mono, monospace',
-                  background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {count} <span className="hidden sm:inline">selected</span>
-                </span>
-                {hasNonOwnedSelected && (
-                  <span style={{ fontSize: '9px', color: '#eab308', paddingLeft: '8px', marginTop: '-2px' }}>
-                    {deletableCount === 0 ? 'Cannot delete contributions' : 'Contributions filtered from delete'}
+            <div className="pointer-events-auto max-w-[calc(100vw-32px)]">
+              <div className="flex items-center gap-2 px-4 py-2 bg-neutral-950/85 border border-white/10 rounded-full shadow-2xl backdrop-blur-2xl overflow-x-auto scrollbar-none">
+                {/* Count badge */}
+                <div className="flex flex-col items-start select-none shrink-0">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold font-mono bg-white/5 text-neutral-300 whitespace-nowrap">
+                    {count} <span className="hidden sm:inline">selected</span>
                   </span>
-                )}
-              </div>
-
-              <div style={divStyle} />
-
-              {/* Progress or action buttons */}
-              {progress ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '220px', padding: '2px 8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: 'rgba(255,255,255,0.4)' }}>
-                    <span>
-                      {progressLabel}
-                      {progress.repoName && <span style={{ color: 'rgba(255,255,255,0.7)' }}> · {progress.repoName}</span>}
+                  {hasNonOwnedSelected && (
+                    <span className="text-[9px] text-amber-500 pl-2 -mt-0.5 whitespace-nowrap">
+                      {deletableCount === 0 ? 'Cannot delete contributions' : 'Contributions filtered'}
                     </span>
-                    <span>{progress.current}/{progress.total}</span>
+                  )}
+                </div>
+
+                <div className="w-[1px] h-4 bg-white/10 shrink-0" />
+
+                {/* Progress or action buttons */}
+                {progress ? (
+                  <div className="flex flex-col gap-1 w-[220px] px-2 py-0.5 shrink-0">
+                    <div className="flex justify-between text-[11px] font-mono text-neutral-500">
+                      <span className="truncate max-w-[150px]">
+                        {progressLabel}
+                        {progress.repoName && <span className="text-neutral-300"> · {progress.repoName}</span>}
+                      </span>
+                      <span className="shrink-0">{progress.current}/{progress.total}</span>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: progressBg }}
+                        animate={{ width: `${(progress.current / progress.total) * 100}%` }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                      />
+                    </div>
                   </div>
-                  <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
-                    <motion.div
-                      style={{ height: '100%', background: progressBg, borderRadius: '99px' }}
-                      animate={{ width: `${(progress.current / progress.total) * 100}%` }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                ) : (
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <FluidTabs
+                      tabs={actionTabs}
+                      activeId={activeActionId}
+                      onChange={handleActionChange}
+                      hideLabelOnMobile
+                      className="bg-transparent border-none p-0 gap-0 sm:gap-1 shadow-none"
                     />
                   </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                  <FluidTabs
-                    tabs={actionTabs}
-                    activeId={activeActionId}
-                    onChange={handleActionChange}
-                    hideLabelOnMobile
-                    className="bg-transparent border-none p-0 gap-0 sm:gap-1 shadow-none"
-                  />
-                </div>
-              )}
+                )}
 
-              <div style={divStyle} />
+                <div className="w-[1px] h-4 bg-white/10 shrink-0" />
 
-              {/* Delete */}
-              <button
-                onClick={() => setDeleteModalOpen(true)}
-                disabled={isProcessing || deletableCount === 0}
-                title={deletableCount === 0 ? "Cannot delete contribution repositories" : "Delete selected"}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '5px 12px', borderRadius: '9999px',
-                  background: deletableCount === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(225,53,53,0.12)', 
-                  border: deletableCount === 0 ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(225,53,53,0.2)',
-                  color: deletableCount === 0 ? 'rgba(255,255,255,0.2)' : '#e13535', 
-                  fontSize: '12px', fontWeight: 600,
-                  cursor: deletableCount === 0 ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => { if (deletableCount > 0) e.currentTarget.style.background = 'rgba(225,53,53,0.22)'; }}
-                onMouseLeave={e => { if (deletableCount > 0) e.currentTarget.style.background = 'rgba(225,53,53,0.12)'; }}
-              >
-                <Trash2 size={14} />
-                <span className="hidden sm:inline">Delete</span>
-              </button>
-
-              {/* Transfer */}
-              {hasOwnedSelected && (
+                {/* Delete */}
                 <button
-                  onClick={() => setTransferModalOpen(true)}
-                  disabled={isProcessing}
-                  title="Share/Transfer selected repositories"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '0 12px', height: '36px', borderRadius: '10px',
-                    background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)',
-                    color: '#a78bfa', fontSize: '12px', fontWeight: 600,
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    whiteSpace: 'nowrap', flexShrink: 0
-                  }}
+                  onClick={() => setDeleteModalOpen(true)}
+                  disabled={isProcessing || deletableCount === 0}
+                  title={deletableCount === 0 ? "Cannot delete contribution repositories" : "Delete selected"}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 select-none shrink-0",
+                    deletableCount === 0
+                      ? "bg-white/5 border border-white/10 text-white/20 cursor-not-allowed"
+                      : "bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 hover:border-red-500/30"
+                  )}
                 >
-                  <Share2 size={14} />
-                  <span className="hidden sm:inline" style={{ fontSize: '11px' }}>Share</span>
+                  <Trash2 size={14} />
+                  <span className="hidden sm:inline">Delete</span>
                 </button>
-              )}
 
-              {/* Leave */}
-              {hasNonOwnedSelected && (
+                {/* Transfer */}
+                {hasOwnedSelected && (
+                  <button
+                    onClick={() => setTransferModalOpen(true)}
+                    disabled={isProcessing}
+                    title="Share/Transfer selected repositories"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 select-none bg-purple-500/15 border border-purple-500/25 text-purple-400 hover:bg-purple-500/25 hover:border-purple-500/35 shrink-0"
+                  >
+                    <Share2 size={14} />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                )}
+
+                {/* Rename */}
+                {count === 1 && hasOwnedSelected && (
+                  <button
+                    onClick={() => setRenameModalOpen(true)}
+                    disabled={isProcessing}
+                    title="Rename repository"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 select-none bg-indigo-500/15 border border-indigo-500/25 text-indigo-400 hover:bg-indigo-500/25 hover:border-indigo-500/35 shrink-0"
+                  >
+                    <Edit2 size={14} />
+                    <span className="hidden sm:inline">Rename</span>
+                  </button>
+                )}
+
+                {/* Leave */}
+                {hasNonOwnedSelected && (
+                  <button
+                    onClick={() => setLeaveModalOpen(true)}
+                    disabled={isProcessing}
+                    title="Leave selected contribution repositories"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 select-none bg-blue-500/12 border border-blue-500/20 text-blue-500 hover:bg-blue-500/22 hover:border-blue-500/30 shrink-0"
+                  >
+                    <LogOut size={14} />
+                    <span className="hidden sm:inline">Leave</span>
+                  </button>
+                )}
+
+                {/* Dismiss */}
                 <button
-                  onClick={() => setLeaveModalOpen(true)}
+                  onClick={deselectAll}
                   disabled={isProcessing}
-                  title="Leave selected contribution repositories"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '5px',
-                    padding: '5px 12px', borderRadius: '9999px',
-                    background: 'rgba(59,130,246,0.12)', 
-                    border: '1px solid rgba(59,130,246,0.2)',
-                    color: '#3b82f6', 
-                    fontSize: '12px', fontWeight: 600,
-                    cursor: 'pointer', whiteSpace: 'nowrap',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.22)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.12)'; }}
+                  title="Clear selection"
+                  className="flex items-center justify-center w-7 h-7 rounded-full text-neutral-500 hover:text-neutral-300 hover:bg-white/5 cursor-pointer transition-all duration-150 shrink-0"
                 >
-                  <LogOut size={14} />
-                  <span className="hidden sm:inline">Leave</span>
+                  <X size={13} />
                 </button>
-              )}
-
-              {/* Dismiss */}
-              <button
-                onClick={deselectAll}
-                disabled={isProcessing}
-                title="Clear selection"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '28px', height: '28px', borderRadius: '9999px',
-                  background: 'transparent', border: 'none',
-                  color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
-                  transition: 'background 0.15s, color 0.15s', flexShrink: 0,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
-              >
-                <X size={13} />
-              </button>
-              
-              <div style={{ width: '4px', flexShrink: 0 }} />
-            </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -581,36 +549,44 @@ export const ActionBar: React.FC = () => {
         {backupWarning && (
           <>
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.93, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.93, y: 12 }}
               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 61, width: '100%', maxWidth: '360px', padding: '0 16px' }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[51] w-full max-w-sm px-4"
             >
-              <div style={{ background: 'rgba(12,12,12,0.97)', backdropFilter: 'blur(40px)', border: '1px solid rgba(234,179,8,0.2)', borderRadius: '20px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 24px 80px rgba(0,0,0,0.7)' }}>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ padding: '8px', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)', borderRadius: '12px', flexShrink: 0 }}>
-                    <Send size={14} style={{ color: '#eab308' }} />
+              <div className="bg-zinc-950/95 border border-yellow-500/20 rounded-2xl p-5 flex flex-col gap-4 shadow-2xl backdrop-blur-xl">
+                <div className="flex gap-3 items-start text-left">
+                  <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl shrink-0">
+                    <Send size={14} className="text-yellow-500" />
                   </div>
                   <div>
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: 'white', marginBottom: '4px' }}>Telegram Backup Failed</p>
-                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
-                      Could not back up <code style={{ fontFamily: 'JetBrains Mono, monospace', color: 'rgba(255,255,255,0.7)' }}>{backupWarning.repo.name}</code>
+                    <p className="text-sm font-semibold text-white mb-1">Telegram Backup Failed</p>
+                    <p className="text-xs text-neutral-400">
+                      Could not back up <code className="font-mono text-neutral-300">{backupWarning.repo.name}</code>
                     </p>
-                    <p style={{ fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', marginTop: '8px', padding: '6px 8px', background: 'rgba(225,53,53,0.08)', border: '1px solid rgba(225,53,53,0.15)', borderRadius: '8px', color: '#e13535', wordBreak: 'break-all' }}>
+                    <p className="text-xs font-mono mt-2 px-2 py-1.5 bg-red-500/5 border border-red-500/15 rounded-lg text-red-500 break-all">
                       {backupWarning.error}
                     </p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <button onClick={() => skipBackupForCurrent?.(true)} style={{ height: '40px', background: '#e13535', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => skipBackupForCurrent?.(true)} 
+                    className="h-10 w-full bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  >
                     Delete anyway (no backup)
                   </button>
-                  <button onClick={() => skipBackupForCurrent?.(false)} style={{ height: '40px', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  <button 
+                    onClick={() => skipBackupForCurrent?.(false)} 
+                    className="h-10 w-full bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  >
                     Skip this repo (keep on GitHub)
                   </button>
                 </div>
@@ -647,6 +623,16 @@ export const ActionBar: React.FC = () => {
         repoCount={selectedRepos.filter(r => r.owner.login === user?.login).length}
         isProcessing={isProcessing}
       />
+
+      {/* ─── Rename Modal ────────────────────────────────────── */}
+      {count === 1 && selectedRepos[0] && (
+        <RenameModal
+          isOpen={renameModalOpen}
+          onClose={() => setRenameModalOpen(false)}
+          onConfirm={handleRename}
+          currentName={selectedRepos[0].name}
+        />
+      )}
     </>
   );
 };

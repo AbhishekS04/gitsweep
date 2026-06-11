@@ -47,23 +47,25 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
 
   return (
     <div className="relative w-full">
-      <div className="mx-auto flex max-w-7xl items-center justify-center px-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-center px-4">
         {/* Floating Navbar Pill with Glassmorphism */}
-        <div className="flex h-16 w-full max-w-5xl items-center justify-between gap-2 rounded-full border border-white/10 bg-neutral-900/60 pr-3 pl-2 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-neutral-900/60">
+        <div className="flex h-14 w-full max-w-full items-center justify-between rounded-full border border-white/10 bg-neutral-900/60 px-3 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-neutral-900/60">
           
-          {/* Logo Section */}
-          <div className="flex items-center gap-2 pr-4 pl-4 select-none">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
-              <GithubIcon className="h-4 w-4 text-white" />
+          {/* LEFT: Logo */}
+          <div className="flex-1 flex items-center justify-start pl-2">
+            <div className="flex items-center gap-2 select-none">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                <GithubIcon className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-base font-bold tracking-tight text-white font-mono">
+                GitSweep
+              </span>
             </div>
-            <span className="text-base font-bold tracking-tight text-white font-mono">
-              GitSweep
-            </span>
           </div>
 
           {/* Desktop Navigation */}
-          {user && (
-            <div className="hidden lg:block">
+          {user ? (
+            <div className="flex-none hidden lg:block">
               <NavigationMenu
                 className={cn(
                   'static',
@@ -285,10 +287,14 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
+          ) : (
+            <div className="flex-none hidden lg:block" />
           )}
 
-          {/* Action Icons & Profile Section */}
-          <div className="flex items-center gap-2">
+          {/* RIGHT: Action Icons & Profile Section */}
+          <div className="flex-1 flex items-center justify-end">
+            <div className="flex items-center gap-2">
+
             {user ? (
               <>
                 <div className="flex items-center gap-1.5 pr-2 border-r border-white/10 mr-1.5">
@@ -453,6 +459,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
               </a>
             )}
           </div>
+        </div>
           
         </div>
       </div>

@@ -96,6 +96,15 @@ export const updateRepoVisibility = async (owner: string, repo: string, isPrivat
   });
 };
 
+export const renameRepo = async (owner: string, repo: string, newName: string) => {
+  const client = getOctokit();
+  await client.rest.repos.update({
+    owner,
+    repo,
+    name: newName,
+  });
+};
+
 export const updateRepoArchived = async (owner: string, repo: string, archived: boolean) => {
   const client = getOctokit();
   await client.rest.repos.update({

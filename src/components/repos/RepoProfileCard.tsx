@@ -13,6 +13,7 @@ import { useSelectionStore } from '../../store/selectionStore';
 import { fetchRepoCollaborators } from '../../lib/github';
 import { CollaboratorPanel } from './CollaboratorPanel';
 import { Checkbox } from '../ui/Checkbox';
+import { cn } from '../../lib/utils';
 
 interface RepoProfileCardProps {
   repo: Repo;
@@ -65,12 +66,12 @@ const grad = (name: string) => GRADS[name.charCodeAt(0) % GRADS.length];
 const spring = { type: 'spring', stiffness: 300, damping: 30 } as const;
 
 const DataRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '5px 0' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#71717a', flexShrink: 0 }}>
-      {icon}
-      <span style={{ fontSize: 13, fontWeight: 500, color: '#71717a', whiteSpace: 'nowrap' }}>{label}</span>
+  <div className="flex items-center justify-between gap-4 py-2 border-b border-white/5 last:border-b-0">
+    <div className="flex items-center gap-2.5 text-neutral-400 shrink-0">
+      <span className="text-neutral-500">{icon}</span>
+      <span className="text-xs font-medium text-neutral-400">{label}</span>
     </div>
-    <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 0, flex: 1 }}>{children}</div>
+    <div className="flex justify-end items-center min-w-0 flex-1">{children}</div>
   </div>
 );
 
@@ -124,78 +125,77 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
       <motion.div
         layout
         transition={spring}
-        style={{
-          borderRadius: 16,
-          border: isSelected ? '1.5px solid rgba(99,102,241,0.6)' : '1.5px solid rgba(255,255,255,0.07)',
-          background: isSelected ? 'rgba(99,102,241,0.06)' : 'rgba(18,18,22,0.9)',
-          boxShadow: isSelected ? '0 0 24px rgba(99,102,241,0.12)' : '0 2px 12px rgba(0,0,0,0.25)',
-          overflow: 'hidden',
-          backdropFilter: 'blur(12px)',
-        }}
+        className={cn(
+          "rounded-xl border transition-all duration-300 backdrop-blur-md overflow-hidden",
+          isSelected
+            ? "border-indigo-500 bg-indigo-500/5 shadow-[0_0_20px_rgba(99,102,241,0.15)]"
+            : "border-white/10 bg-zinc-950/80 shadow-md hover:border-white/20 hover:shadow-2xl hover:-translate-y-0.5"
+        )}
       >
         {/* ── Collapsed Header ── */}
         <div
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 12, padding: '14px 14px', cursor: 'pointer',
-          }}
           onClick={() => setIsExpanded(v => !v)}
+          className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer min-h-[56px] hover:bg-white/[0.02] active:bg-white/[0.04] transition-all duration-200 select-none"
         >
           {/* Left: checkbox + avatar + name */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-            <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div onClick={e => e.stopPropagation()} className="shrink-0 flex items-center">
               <Checkbox checked={isSelected} onCheckedChange={() => onToggle(repo.id)} />
             </div>
 
             {/* GitHub owner avatar */}
-            <div style={{
-              width: 38, height: 38, borderRadius: 10,
-              flexShrink: 0, overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-              background: `linear-gradient(135deg, ${g0}, ${g1})`,
-            }}>
+            <div 
+              className="shrink-0 overflow-hidden rounded-lg border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+              style={{
+                width: 36, height: 36,
+                background: `linear-gradient(135deg, ${g0}, ${g1})`,
+              }}
+            >
               <img
                 src={`https://github.com/${repo.owner.login}.png?size=80`}
                 alt={repo.owner.login}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                className="w-full h-full object-cover block"
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
               />
             </div>
 
             {/* Name only */}
-            <span style={{
-              fontSize: 15, fontWeight: 600, color: '#ededed',
-              fontFamily: 'monospace', overflow: 'hidden',
-              textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
+            <span className="text-sm font-semibold text-neutral-100 font-mono tracking-tight overflow-hidden text-ellipsis whitespace-nowrap">
               {repo.name}
             </span>
           </div>
 
-          {/* Right: sparkline + chevron */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <div style={{ width: 64 }}>
-              <svg viewBox="0 0 80 20" fill="none" style={{ width: '100%', height: 'auto' }}>
-                <path
-                  d="M2 18C15 15 25 5 45 8C65 11 70 2 78 2"
-                  stroke={isStarred ? '#facc15' : g0}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+          {/* Right: badges + chevron */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 select-none">
+              {repo.archived && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                  <Archive size={11} /> Arch
+                </span>
+              )}
+              {repo.fork && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-400 uppercase tracking-wider">
+                  <GitFork size={11} /> Fork
+                </span>
+              )}
+              {repo.private ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+                  <Lock size={11} /> Priv
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                  <Unlock size={11} /> Pub
+                </span>
+              )}
             </div>
             <motion.div
               animate={{ rotate: isExpanded ? 0 : 180 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 30, borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.05)',
-                color: '#71717a', flexShrink: 0,
-              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-neutral-300 hover:text-white hover:bg-white/10 hover:border-white/20 shrink-0 transition-all duration-200"
             >
-              <ChevronUp size={18} />
+              <ChevronUp size={16} />
             </motion.div>
           </div>
         </div>
@@ -208,13 +208,9 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={spring}
-              style={{
-                borderTop: '1.4px solid rgba(255,255,255,0.06)',
-                background: 'rgba(255,255,255,0.018)',
-                overflow: 'hidden',
-              }}
+              className="border-t border-white/5 overflow-hidden"
             >
-              <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div className="px-4 py-3 flex flex-col gap-0">
                 {/* Live Link — only shown if repo.homepage is set */}
                 {repo.homepage && (
                   <DataRow icon={<LiveLinkIcon size={15} />} label="Live link">
@@ -223,21 +219,7 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5,
-                        borderRadius: 999,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        padding: '2px 10px',
-                        fontSize: 12, fontWeight: 500,
-                        color: '#a1a1aa',
-                        background: 'rgba(255,255,255,0.04)',
-                        textDecoration: 'none',
-                        maxWidth: 180, overflow: 'hidden',
-                        textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#e4e4e7'; el.style.background = 'rgba(255,255,255,0.09)'; }}
-                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#a1a1aa'; el.style.background = 'rgba(255,255,255,0.04)'; }}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-0.5 text-xs font-semibold text-neutral-400 bg-white/5 hover:bg-white/10 hover:text-white hover:border-white/15 transition-all duration-200 select-none max-w-[180px] truncate"
                     >
                       {repo.homepage.replace(/^https?:\/\//, '')}
                       <ExternalLink size={10} />
@@ -260,40 +242,16 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
                   </DataRow>
                 )}
 
-                {/* Visibility */}
-                <DataRow icon={repo.private ? <Lock size={15} /> : <Unlock size={15} />} label="Visibility">
-                  {repo.private ? (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 999,
-                      border: '1px solid rgba(245,158,11,0.3)', padding: '2px 10px',
-                      fontSize: 12, fontWeight: 600, color: '#fbbf24', background: 'rgba(245,158,11,0.1)',
-                    }}>
-                      <Lock size={11} /> Private
-                    </span>
-                  ) : (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 999,
-                      border: '1px solid rgba(34,197,94,0.3)', padding: '2px 10px',
-                      fontSize: 12, fontWeight: 600, color: '#4ade80', background: 'rgba(34,197,94,0.1)',
-                    }}>
-                      <Unlock size={11} /> Public
-                    </span>
-                  )}
-                </DataRow>
-
                 {/* Stars */}
                 <DataRow icon={<Star size={15} />} label="Stars">
                   <motion.button
                     onClick={e => { e.stopPropagation(); toggleFavorite(repo.id); }}
                     whileTap={{ scale: 0.8 }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      cursor: 'pointer', background: 'transparent', border: 'none',
-                      padding: 0, outline: 'none', color: isStarred ? '#facc15' : '#d4d4d8',
-                    }}
+                    className="inline-flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 outline-none select-none transition-colors duration-200"
+                    style={{ color: isStarred ? '#facc15' : '#d4d4d8' }}
                   >
                     <Star size={14} style={{ fill: isStarred ? '#facc15' : 'none' }} />
-                    <span style={{ fontSize: 14, fontWeight: 600, fontFamily: 'monospace', color: isStarred ? '#facc15' : '#d4d4d8' }}>
+                    <span className="text-sm font-semibold font-mono">
                       {repo.stargazers_count}
                     </span>
                   </motion.button>
@@ -302,8 +260,8 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
                 {/* Collaborators */}
                 <DataRow icon={<Users size={15} />} label="Collaborators">
                   {loadingCollabs
-                    ? <Loader2 size={14} className="animate-spin" style={{ color: '#71717a' }} />
-                    : <span style={{ fontSize: 14, fontWeight: 600, color: '#d4d4d8', fontFamily: 'monospace' }}>
+                    ? <Loader2 size={14} className="animate-spin text-neutral-500" />
+                    : <span className="text-sm font-semibold text-neutral-300 font-mono">
                         {collabCount !== null ? `${collabCount}` : '—'}
                       </span>
                   }
@@ -311,96 +269,51 @@ export const RepoProfileCard: React.FC<RepoProfileCardProps> = ({ repo, isSelect
 
                 {/* Size */}
                 <DataRow icon={<HardDrive size={15} />} label="Size">
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#d4d4d8', fontFamily: 'monospace' }}>
+                  <span className="text-sm font-semibold text-neutral-300 font-mono">
                     {formatSize(repo.size)}
                   </span>
                 </DataRow>
 
-                {/* Branch */}
+                {/* Default branch */}
                 <DataRow icon={<GitBranch size={15} />} label="Default branch">
-                  <span style={{
-                    fontSize: 12, fontWeight: 600, fontFamily: 'monospace',
-                    color: '#a78bfa', background: 'rgba(167,139,250,0.1)',
-                    border: '1px solid rgba(167,139,250,0.22)',
-                    borderRadius: 999, padding: '2px 10px',
-                  }}>
+                  <span className="text-xs font-semibold font-mono text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-2.5 py-0.5">
                     {repo.default_branch}
                   </span>
                 </DataRow>
 
                 {/* Updated */}
                 <DataRow icon={<Clock size={15} />} label="Last updated">
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#d4d4d8', fontFamily: 'monospace' }}>
+                  <span className="text-sm font-semibold text-neutral-300 font-mono">
                     {formatDistanceToNow(repo.updated_at)}
                   </span>
                 </DataRow>
 
-                {/* Archived / Fork */}
-                {(repo.archived || repo.fork) && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    {repo.archived && (
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 999,
-                        border: '1px solid rgba(244,63,94,0.3)', padding: '3px 10px',
-                        fontSize: 11, fontWeight: 700, color: '#fb7185', background: 'rgba(244,63,94,0.1)',
-                        letterSpacing: '0.05em', textTransform: 'uppercase',
-                      }}>
-                        <Archive size={10} /> Archived
-                      </span>
-                    )}
-                    {repo.fork && (
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 999,
-                        border: '1px solid rgba(14,165,233,0.3)', padding: '3px 10px',
-                        fontSize: 11, fontWeight: 700, color: '#38bdf8', background: 'rgba(14,165,233,0.1)',
-                        letterSpacing: '0.05em', textTransform: 'uppercase',
-                      }}>
-                        <GitFork size={10} /> Fork
-                      </span>
-                    )}
-                  </div>
-                )}
+
 
                 {/* Contribution owner */}
                 {isContribution && (
-                  <div style={{ marginTop: 10 }}>
-                    <span style={{ fontSize: 12, color: '#52525b' }}>Owner: </span>
-                    <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace' }}>{repo.owner.login}</span>
+                  <div style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }} className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold tracking-wide uppercase text-neutral-500 font-mono">Owner</span>
+                    <span className="text-xs text-neutral-400 font-mono">{repo.owner.login}</span>
                   </div>
                 )}
 
                 {/* Action buttons */}
-                <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <div style={{ display: 'flex', gap: 8, paddingTop: 12 }}>
                   <a
                     href={`https://github.com/${repo.full_name}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    style={{
-                      flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      gap: 6, borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)',
-                      padding: '8px 12px', fontSize: 12, fontWeight: 600,
-                      color: '#a1a1aa', background: 'rgba(255,255,255,0.04)',
-                      textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.09)'; el.style.color = '#e4e4e7'; }}
-                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#a1a1aa'; }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/10 px-3 py-2.5 text-xs font-semibold text-neutral-400 bg-white/5 hover:bg-white/10 hover:text-white hover:border-white/15 transition-all duration-200 select-none text-center"
                   >
-                    <Globe size={13} /> GitHub <ExternalLink size={11} />
+                    <Globe size={13} /> GitHub <ExternalLink size={10} />
                   </a>
 
                   {!isContribution && (
                     <button
                       onClick={e => { e.stopPropagation(); toggleInvite(); }}
-                      style={{
-                        flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        gap: 6, borderRadius: 9, border: '1px solid rgba(99,102,241,0.35)',
-                        padding: '8px 12px', fontSize: 12, fontWeight: 600,
-                        color: '#818cf8', background: 'rgba(99,102,241,0.08)',
-                        cursor: 'pointer', transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.15)'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.08)'; }}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/30 px-3 py-2.5 text-xs font-semibold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-indigo-300 hover:border-indigo-500/40 transition-all duration-200 select-none cursor-pointer"
                     >
                       <UserPlus size={13} /> Invite
                     </button>

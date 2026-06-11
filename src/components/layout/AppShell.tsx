@@ -67,7 +67,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, [children]);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between" style={{ background: 'hsl(0 0% 4%)' }}>
+    <div className="min-h-screen flex flex-col justify-between" style={{ background: 'hsl(0 0% 0%)' }}>
       <div className="w-full flex-grow relative">
         {/* Top dissolving gradient mask overlay */}
         <div className="fixed top-0 left-0 right-0 h-20 sm:h-28 bg-gradient-to-b from-background via-background/90 to-transparent z-40 pointer-events-none" />

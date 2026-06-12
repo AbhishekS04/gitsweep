@@ -12,11 +12,8 @@ export interface TelegramBackupResult {
  * Returns true if Telegram credentials are configured.
  */
 export const isTelegramConfigured = (): boolean => {
-  const { useCustomTelegram, telegramBotToken, telegramChatId } = useSettingsStore.getState();
-  if (useCustomTelegram && telegramBotToken && telegramChatId) {
-    return true;
-  }
-  return import.meta.env.VITE_TELEGRAM_CONFIGURED === 'true';
+  const { telegramBotToken, telegramChatId } = useSettingsStore.getState();
+  return !!(telegramBotToken && telegramChatId);
 };
 
 export interface BackupMetadata {
@@ -44,10 +41,10 @@ export const backupRepoToTelegram = async (
       return { ok: false, error: 'Not authenticated' };
     }
 
-    const { useCustomTelegram, telegramBotToken, telegramChatId } = useSettingsStore.getState();
+    const { telegramBotToken, telegramChatId } = useSettingsStore.getState();
     const payloadBody: any = { owner, repo, token, meta, mode };
 
-    if (useCustomTelegram && telegramBotToken && telegramChatId) {
+    if (telegramBotToken && telegramChatId) {
       payloadBody.botToken = telegramBotToken;
       payloadBody.chatId = telegramChatId;
     }

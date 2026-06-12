@@ -67,7 +67,7 @@ export const OAuthCallback: React.FC = () => {
         navigate('/', { replace: true });
       } catch (err) {
         const error = err as Error;
-        console.error('OAuth Error:', error);
+        console.error('OAuth Error:', error.message || error);
         const msg = error.message || 'An unexpected error occurred during authentication.';
         
         // Clear stale credentials on login failure

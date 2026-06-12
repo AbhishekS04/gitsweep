@@ -8,20 +8,20 @@ import { IoCalendar } from 'react-icons/io5';
 import { BsFillPeopleFill, BsPinFill } from 'react-icons/bs';
 import { RiBubbleChartFill } from 'react-icons/ri';
 
+const FILTER_ITEMS = [
+  { id: 'all', label: 'All', icon: FaTasks },
+  { id: 'public', label: 'Public', icon: BsFillPeopleFill },
+  { id: 'private', label: 'Private', icon: BsPinFill },
+  { id: 'archived', label: 'Archived', icon: RiBubbleChartFill },
+  { id: 'forks', label: 'Forks', icon: IoCalendar },
+];
+
 export const FilterBar: React.FC<{ totalCount: number }> = ({ totalCount }) => {
   const { 
     searchQuery, setSearchQuery, 
     visibilityFilter, setVisibilityFilter,
     sortBy, setSortBy,
   } = useSelectionStore();
-
-  const items = [
-    { id: 'all', label: 'All', icon: FaTasks },
-    { id: 'public', label: 'Public', icon: BsFillPeopleFill },
-    { id: 'private', label: 'Private', icon: BsPinFill },
-    { id: 'archived', label: 'Archived', icon: RiBubbleChartFill },
-    { id: 'forks', label: 'Forks', icon: IoCalendar },
-  ];
 
   return (
     <div className="flex flex-col gap-4 mb-6 border-b border-border/50 pb-4">
@@ -38,7 +38,7 @@ export const FilterBar: React.FC<{ totalCount: number }> = ({ totalCount }) => {
           />
 
           <FilterDisclosure
-            items={items}
+            items={FILTER_ITEMS}
             activeId={visibilityFilter}
             onChange={(id) => setVisibilityFilter(id as FilterVisibility)}
             sortBy={sortBy}

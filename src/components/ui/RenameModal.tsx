@@ -142,6 +142,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
                   <div style={{ marginBottom: '20px' }}>
                     <input
                       type="text"
+                      aria-label="New repository name"
                       autoFocus
                       value={newName}
                       onChange={(e) => handleInputChange(e.target.value)}
@@ -187,6 +188,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
+                      type="button"
                       onClick={handleClose}
                       disabled={isProcessing}
                       style={{
@@ -206,6 +208,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
                     </button>
 
                     <button
+                      type="button"
                       onClick={handleRename}
                       disabled={!isValid || isProcessing}
                       style={{

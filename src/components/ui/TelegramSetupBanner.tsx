@@ -35,21 +35,24 @@ export const TelegramSetupBanner: React.FC = () => {
             <div>
               <p className="text-sm font-medium">Enable Telegram Backup</p>
               <p className="text-xs text-muted-foreground">
-                Auto-backup deleted repos as ZIPs to your Telegram chat before they're gone forever.
+                Auto-backup deleted/archived repos as ZIPs to your private Telegram chat before they're gone forever.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
+              type="button"
               onClick={() => setExpanded(v => !v)}
-              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors text-xs flex items-center gap-1"
+              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors text-xs flex items-center gap-1 cursor-pointer font-mono"
             >
-              {expanded ? <>Hide<ChevronUp className="h-3 w-3" /></> : <>How to<ChevronDown className="h-3 w-3" /></>}
+              {expanded ? <>Hide<ChevronUp className="h-3 w-3" /></> : <>Setup Guide<ChevronDown className="h-3 w-3" /></>}
             </button>
             <button
+              type="button"
               onClick={handleDismiss}
-              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer"
               title="Dismiss"
+              aria-label="Dismiss banner"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -65,31 +68,28 @@ export const TelegramSetupBanner: React.FC = () => {
               className="overflow-hidden"
             >
               <div className="border-t border-blue-500/15 px-4 py-4 space-y-3 text-sm text-muted-foreground">
-                <ol className="list-decimal list-inside space-y-2">
+                <ol className="list-decimal list-inside space-y-2.5 text-xs">
                   <li>
-                    Open Telegram and message{' '}
-                    <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-mono">@BotFather</a>
-                    {' '}→ send <code className="bg-accent px-1.5 py-0.5 rounded font-mono text-xs">/newbot</code> → follow steps → copy the <strong>Bot Token</strong>.
+                    Search for{' '}
+                    <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-mono font-bold">
+                      @BotFather
+                    </a>{' '}
+                    on Telegram, send <code className="bg-white/10 px-1 rounded font-mono">/newbot</code>, and copy the **Bot Token**.
                   </li>
                   <li>
-                    Message{' '}
-                    <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-mono">@userinfobot</a>
-                    {' '}to get your <strong>Chat ID</strong>.
+                    Search for{' '}
+                    <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-mono font-bold">
+                      @userinfobot
+                    </a>{' '}
+                    to obtain your account's numeric **Chat ID**.
                   </li>
                   <li>
-                    Start your bot by sending it{' '}
-                    <code className="bg-accent px-1.5 py-0.5 rounded font-mono text-xs">/start</code>
-                    {' '}in a direct message — required before it can send you files.
+                    Open a direct chat with your new bot and send it{' '}
+                    <code className="bg-white/10 px-1 rounded font-mono">/start</code> (required for the bot to message you).
                   </li>
                   <li>
-                    Add to your <code className="bg-accent px-1.5 py-0.5 rounded font-mono text-xs">.env.local</code>:
-                    <pre className="mt-1.5 rounded-md bg-background/60 border border-border/40 p-3 text-xs font-mono overflow-x-auto">
-{`TELEGRAM_BOT_TOKEN=1234567890:ABCdef...
-TELEGRAM_CHAT_ID=987654321
-VITE_TELEGRAM_CONFIGURED=true`}
-                    </pre>
+                    Click the **Settings Gear** at the top of this dashboard, paste your credentials, and click **Save Changes**!
                   </li>
-                  <li>Restart <code className="bg-accent px-1.5 py-0.5 rounded font-mono text-xs">npm run dev</code> — done! 🎉</li>
                 </ol>
               </div>
             </motion.div>

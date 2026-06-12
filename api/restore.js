@@ -12,6 +12,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'Telegram Bot Token is not configured.' });
   }
 
+  if (activeBotToken && !/^\d+:[A-Za-z0-9_-]+$/.test(activeBotToken)) {
+    return res.status(400).json({ ok: false, error: 'Invalid Telegram Bot Token format.' });
+  }
+
   if (!fileId || !repoName || !token || !owner) {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
   }

@@ -59,12 +59,19 @@ const telegramMiddleware = (env: Record<string, string>) =>
     if (req.method === 'GET') {
       try {
         const url = new URL(req.url || '', `http://${req.headers.host}`);
+        const headerBotToken = req.headers['x-telegram-bot-token'] as string | undefined;
         const queryBotToken = url.searchParams.get('botToken');
-        const activeBotToken = queryBotToken || env.TELEGRAM_BOT_TOKEN;
+        const activeBotToken = headerBotToken || queryBotToken || env.TELEGRAM_BOT_TOKEN;
 
         if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
           res.statusCode = 400;
           res.end(JSON.stringify({ ok: false, error: 'Telegram Bot Token is not configured.' }));
+          return;
+        }
+
+        if (activeBotToken && !/^\d+:[A-Za-z0-9_-]+$/.test(activeBotToken)) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ ok: false, error: 'Invalid Telegram Bot Token format.' }));
           return;
         }
 
@@ -119,6 +126,48 @@ const telegramMiddleware = (env: Record<string, string>) =>
       if (!activeBotToken || !activeChatId || activeBotToken === 'your_telegram_bot_token') {
         res.statusCode = 503;
         res.end(JSON.stringify({ ok: false, error: 'Telegram is not configured.' }));
+        return;
+      }
+
+      if (activeBotToken && !/^\d+:[A-Za-z0-9_-]+$/.test(activeBotToken)) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ ok: false, error: 'Invalid Telegram Bot Token format.' }));
+        return;
+      }
+
+      if (activeChatId && !/^-?\d+$/.test(activeChatId.toString())) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ ok: false, error: 'Invalid Telegram Chat ID format.' }));
+        return;
+      }
+
+      if (mode === 'test') {
+        try {
+          const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+          const testCaption = `🔔 *GitSweep Connection Test*\n\nYour Telegram configuration is working perfectly!\n\n🕒 Date: ${dateStr}\n🤖 Powered by GitSweep`;
+          const testRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: activeChatId,
+              text: testCaption,
+              parse_mode: 'Markdown',
+            }),
+          });
+          const testData = await testRes.json() as { ok: boolean, description?: string };
+          res.setHeader('Content-Type', 'application/json');
+          if (!testData.ok) {
+            res.statusCode = 502;
+            res.end(JSON.stringify({ ok: false, error: testData.description || 'Telegram API error' }));
+            return;
+          }
+          res.statusCode = 200;
+          res.end(JSON.stringify({ ok: true }));
+        } catch (e) {
+          const err = e as Error;
+          res.statusCode = 500;
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
         return;
       }
 
@@ -237,6 +286,12 @@ const restoreMiddleware = (env: Record<string, string>) =>
       if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
         res.statusCode = 400;
         res.end(JSON.stringify({ ok: false, error: 'Telegram Bot Token is not configured.' }));
+        return;
+      }
+
+      if (activeBotToken && !/^\d+:[A-Za-z0-9_-]+$/.test(activeBotToken)) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ ok: false, error: 'Invalid Telegram Bot Token format.' }));
         return;
       }
 

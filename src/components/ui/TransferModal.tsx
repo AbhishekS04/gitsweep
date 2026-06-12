@@ -122,12 +122,14 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                       padding: '12px', borderRadius: '12px', background: 'rgba(139,92,246,0.1)',
                       border: '1px solid rgba(139,92,246,0.2)', marginBottom: '20px'
                     }}>
-                      <img src={selectedUser.avatar_url} style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+                      <img src={selectedUser.avatar_url} alt={`${selectedUser.login} avatar`} style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: '14px', color: 'white', fontWeight: 500 }}>{selectedUser.login}</p>
                         <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Target Recipient</p>
                       </div>
                       <button 
+                        type="button"
+                        aria-label="Remove target recipient"
                         onClick={() => setSelectedUser(null)}
                         style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
                       >
@@ -136,12 +138,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                     </div>
                   ) : (
                     <div style={{ marginBottom: '20px', position: 'relative' }}>
-                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>
+                      <label htmlFor="search-recipient" style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>
                         Search Recipient
                       </label>
                       <div style={{ position: 'relative' }}>
                         <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)' }} />
                         <input
+                          id="search-recipient"
                           type="text"
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
@@ -173,6 +176,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                         >
                           {results.map(user => (
                             <button
+                              type="button"
                               key={user.id}
                               onClick={() => {
                                 setSelectedUser(user);
@@ -186,7 +190,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                                 color: 'white', fontSize: '13px', cursor: 'pointer', textAlign: 'left',
                               }}
                             >
-                              <img src={user.avatar_url} style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
+                              <img src={user.avatar_url} alt={`${user.login} avatar`} style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
                               <span>{user.login}</span>
                             </button>
                           ))}
@@ -230,6 +234,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
+                      type="button"
                       onClick={handleClose}
                       disabled={isProcessing}
                       style={{
@@ -243,6 +248,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => onConfirm(selectedUser!.login, shouldBackup)}
                       disabled={isProcessing || !selectedUser}
                       style={{

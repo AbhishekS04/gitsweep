@@ -23,6 +23,7 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       style={{
         display: 'flex', alignItems: 'center', gap: '4px',
@@ -201,6 +202,7 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({
                     {/* Input */}
                     <input
                       type="text"
+                      aria-label="Repository name confirmation"
                       autoFocus
                       value={confirmText}
                       onChange={e => setConfirmText(e.target.value)}
@@ -224,6 +226,7 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
+                    type="button"
                     onClick={handleClose}
                     disabled={isDeleting}
                     style={{
@@ -239,6 +242,7 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => onConfirm(shouldBackup)}
                     disabled={!canDelete || isDeleting}
                     style={{

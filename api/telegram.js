@@ -1,10 +1,15 @@
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
+      const headerBotToken = req.headers['x-telegram-bot-token'];
       const { botToken: queryBotToken } = req.query || {};
-      const activeBotToken = queryBotToken || process.env.TELEGRAM_BOT_TOKEN;
+      const activeBotToken = headerBotToken || queryBotToken || process.env.TELEGRAM_BOT_TOKEN;
       if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
         return res.status(400).json({ ok: false, error: 'Telegram Bot Token is not configured.' });
+      }
+
+      if (activeBotToken && !/^\d+:[A-Za-z0-9_-]+$/.test(activeBotToken)) {
+        return res.status(400).json({ ok: false, error: 'Invalid Telegram Bot Token format.' });
       }
 
       const updatesRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/getUpdates?limit=20&offset=-20`);
@@ -39,6 +44,37 @@ export default async function handler(req, res) {
 
   if (!activeBotToken || !activeChatId || activeBotToken === 'your_telegram_bot_token') {
     return res.status(503).json({ ok: false, error: 'Telegram is not configured.' });
+  }
+
+  if (activeBotToken && !/^\d+:[A-Za-z0-9_-]+$/.test(activeBotToken)) {
+    return res.status(400).json({ ok: false, error: 'Invalid Telegram Bot Token format.' });
+  }
+
+  if (activeChatId && !/^-?\d+$/.test(activeChatId.toString())) {
+    return res.status(400).json({ ok: false, error: 'Invalid Telegram Chat ID format.' });
+  }
+
+  if (mode === 'test') {
+    try {
+      const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const testCaption = `🔔 *GitSweep Connection Test*\n\nYour Telegram configuration is working perfectly!\n\n🕒 Date: ${dateStr}\n🤖 Powered by GitSweep`;
+      const testRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: activeChatId,
+          text: testCaption,
+          parse_mode: 'Markdown',
+        }),
+      });
+      const testData = await testRes.json();
+      if (!testData.ok) {
+        return res.status(502).json({ ok: false, error: testData.description || 'Telegram API error' });
+      }
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
   }
 
   if (!owner || !repo || !token) {

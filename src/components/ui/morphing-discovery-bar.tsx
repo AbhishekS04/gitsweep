@@ -33,11 +33,14 @@ export const MorphingDiscoveryBar: React.FC<MorphingDiscoveryBarProps> = ({
         placeholder="Search repositories..."
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
+        aria-label="Search repositories"
         className="w-full h-full bg-background border border-border/60 dark:border-border/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 rounded-full pl-9 pr-8 text-xs font-mono font-medium text-foreground placeholder:text-muted-foreground/80 outline-none transition-all shadow-sm focus:outline-none"
       />
       {searchValue && (
         <button
+          type="button"
           onClick={() => setSearchValue("")}
+          aria-label="Clear search"
           className="absolute right-2.5 p-1 rounded-full text-foreground/50 hover:text-foreground hover:bg-accent/40 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center outline-none"
         >
           <X size={13} strokeWidth={2.5} />

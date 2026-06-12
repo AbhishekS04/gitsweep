@@ -50,7 +50,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
     const { token, user } = useAuthStore.getState();
     if (!token || !user) return;
 
-    const { useCustomTelegram, telegramBotToken } = useSettingsStore.getState();
+    const { telegramBotToken } = useSettingsStore.getState();
     const requestBody: any = {
       fileId: log.fileId,
       repoName: log.repoName,
@@ -58,7 +58,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
       owner: user.login
     };
 
-    if (useCustomTelegram && telegramBotToken) {
+    if (telegramBotToken) {
       requestBody.botToken = telegramBotToken;
     }
 
@@ -189,6 +189,8 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                 </div>
               </div>
               <button
+                type="button"
+                aria-label="Close Backup History"
                 onClick={onClose}
                 style={{
                   background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
@@ -205,6 +207,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                 <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
                 <input
                   type="text"
+                  aria-label="Search backups"
                   placeholder="Search repository..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -253,6 +256,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                     }}>
                       <input
                         type="text"
+                        aria-label="Repository owner and name (owner/repo)"
                         placeholder="owner/repository"
                         value={manualRepo}
                         onChange={(e) => setManualRepo(e.target.value)}
@@ -262,6 +266,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                         }}
                       />
                       <button
+                        type="button"
                         onClick={handleManualAdd}
                         style={{
                           padding: '4px 12px', background: '#3b82f6', border: 'none',
@@ -375,6 +380,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                               <div style={{ display: 'flex', gap: '4px' }}>
                                 <input
                                   type="text"
+                                  aria-label="Telegram File ID"
                                   placeholder="File ID"
                                   value={tempFileId}
                                   autoFocus
@@ -386,12 +392,15 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                   }}
                                 />
                                 <button
+                                  type="button"
                                   onClick={() => handleUpdateFileId(log.id)}
                                   style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', cursor: 'pointer' }}
                                 >
                                   OK
                                 </button>
                                 <button
+                                  type="button"
+                                  aria-label="Cancel linking"
                                   onClick={() => setLinkingId(null)}
                                   style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', cursor: 'pointer' }}
                                 >
@@ -403,12 +412,13 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                 onClick={async () => {
                                   setIsSyncing(true);
                                   try {
-                                    const { useCustomTelegram, telegramBotToken } = useSettingsStore.getState();
+                                    const { telegramBotToken } = useSettingsStore.getState();
                                     const url = new URL('/api/telegram', window.location.origin);
-                                    if (useCustomTelegram && telegramBotToken) {
-                                      url.searchParams.append('botToken', telegramBotToken);
+                                    const headers: Record<string, string> = {};
+                                    if (telegramBotToken) {
+                                      headers['x-telegram-bot-token'] = telegramBotToken;
                                     }
-                                    const res = await fetch(url.toString());
+                                    const res = await fetch(url.toString(), { headers });
                                     const data = await res.json();
                                     if (data.ok) {
                                       const docs = data.documents || [];

@@ -41,6 +41,43 @@ interface MockRepo {
   languages: { name: string; icon: React.ReactNode; color: string }[];
 }
 
+const MOCK_REPOS: MockRepo[] = [
+  {
+    id: 'gitsweep-core',
+    name: 'gitsweep-core',
+    description: 'Repository orchestrator for bulk workspace cleansing.',
+    stars: 142,
+    private: false,
+    archived: false,
+    languages: [
+      { name: 'TypeScript', icon: <SiTypescript size={13} />, color: 'text-[#3178c6]' },
+      { name: 'Docker', icon: <SiDocker size={13} />, color: 'text-[#2496ed]' },
+    ],
+  },
+  {
+    id: 'adamas-registry',
+    name: 'adamas-registry',
+    description: 'Administrative tools and identity registry system.',
+    stars: 8,
+    private: true,
+    archived: false,
+    languages: [
+      { name: 'Go', icon: <SiGo size={13} />, color: 'text-[#00add8]' },
+    ],
+  },
+  {
+    id: 'legacy-backend',
+    name: 'legacy-backend',
+    description: 'Deprecated backend services and schema prototypes.',
+    stars: 0,
+    private: false,
+    archived: true,
+    languages: [
+      { name: 'Python', icon: <SiPython size={13} />, color: 'text-[#3776ab]' },
+    ],
+  },
+];
+
 export const Login: React.FC = () => {
   // Live Interactive Mock States
   const [selectedRepos, setSelectedRepos] = useState<string[]>(['gitsweep-core', 'adamas-registry']);
@@ -79,7 +116,7 @@ export const Login: React.FC = () => {
       toast.success('Connected successfully!', { description: `Welcome back, @${userRes.data.login}!` });
     } catch (err) {
       const error = err as Error;
-      console.error(error);
+      console.error('Authentication Error:', error.message || error);
       useAuthStore.setState({ token: null, user: null });
       toast.error('Authentication failed', { description: 'Invalid token or insufficient scopes.' });
     } finally {
@@ -87,45 +124,8 @@ export const Login: React.FC = () => {
     }
   };
 
-  const mockRepos: MockRepo[] = [
-    {
-      id: 'gitsweep-core',
-      name: 'gitsweep-core',
-      description: 'Repository orchestrator for bulk workspace cleansing.',
-      stars: 142,
-      private: false,
-      archived: false,
-      languages: [
-        { name: 'TypeScript', icon: <SiTypescript size={13} />, color: 'text-[#3178c6]' },
-        { name: 'Docker', icon: <SiDocker size={13} />, color: 'text-[#2496ed]' },
-      ],
-    },
-    {
-      id: 'adamas-registry',
-      name: 'adamas-registry',
-      description: 'Administrative tools and identity registry system.',
-      stars: 8,
-      private: true,
-      archived: false,
-      languages: [
-        { name: 'Go', icon: <SiGo size={13} />, color: 'text-[#00add8]' },
-      ],
-    },
-    {
-      id: 'legacy-backend',
-      name: 'legacy-backend',
-      description: 'Deprecated backend services and schema prototypes.',
-      stars: 0,
-      private: false,
-      archived: true,
-      languages: [
-        { name: 'Python', icon: <SiPython size={13} />, color: 'text-[#3776ab]' },
-      ],
-    },
-  ];
-
   // Filter repos based on interactive state
-  const filteredRepos = mockRepos.filter((repo) => {
+  const filteredRepos = MOCK_REPOS.filter((repo) => {
     const matchesSearch =
       repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       repo.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -262,6 +262,7 @@ export const Login: React.FC = () => {
           {/* Method Tabs */}
           <div className="flex bg-zinc-900/60 p-0.5 rounded-full border border-white/10 w-fit gap-1">
             <button
+              type="button"
               onClick={() => setAuthMethod('oauth')}
               className={`text-xs px-4 py-1.5 rounded-full font-bold transition-all duration-200 cursor-pointer ${
                 authMethod === 'oauth'
@@ -272,6 +273,7 @@ export const Login: React.FC = () => {
               GitHub OAuth
             </button>
             <button
+              type="button"
               onClick={() => setAuthMethod('pat')}
               className={`text-xs px-4 py-1.5 rounded-full font-bold transition-all duration-200 cursor-pointer ${
                 authMethod === 'pat'
@@ -314,6 +316,7 @@ export const Login: React.FC = () => {
                 <form onSubmit={handlePatLogin} className="flex flex-col gap-3 w-full">
                   <input
                     type="password"
+                    aria-label="GitHub Personal Access Token"
                     placeholder="Enter Personal Access Token (PAT)..."
                     value={patToken}
                     onChange={(e) => setPatToken(e.target.value)}
@@ -385,6 +388,7 @@ export const Login: React.FC = () => {
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
                   <input
                     type="text"
+                    aria-label="Search repositories"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search repositories..."
@@ -392,6 +396,8 @@ export const Login: React.FC = () => {
                   />
                   {searchQuery && (
                     <button
+                      type="button"
+                      aria-label="Clear search query"
                       onClick={() => setSearchQuery('')}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
                     >
@@ -400,6 +406,7 @@ export const Login: React.FC = () => {
                   )}
                 </div>
                 <button
+                  type="button"
                   onClick={() => setFilterType((prev) => (prev === 'all' ? 'public' : 'all'))}
                   className={`h-9 px-4 rounded-lg border border-white/10 text-xs font-mono font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
                     filterType === 'public'
@@ -523,6 +530,7 @@ export const Login: React.FC = () => {
                               </div>
                               {showInviteInput ? (
                                 <button
+                                  type="button"
                                   onClick={() => setShowInviteInput(false)}
                                   className="text-[10px] font-mono text-neutral-500 hover:text-white"
                                 >
@@ -530,6 +538,7 @@ export const Login: React.FC = () => {
                                 </button>
                               ) : (
                                 <button
+                                  type="button"
                                   onClick={() => setShowInviteInput(true)}
                                   className="text-[10px] font-mono text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
                                 >
@@ -543,6 +552,7 @@ export const Login: React.FC = () => {
                               <form onSubmit={handleAddCollaborator} className="flex gap-2 items-center">
                                 <input
                                   type="text"
+                                  aria-label="New collaborator username"
                                   value={newCollabName}
                                   onChange={(e) => setNewCollabName(e.target.value)}
                                   placeholder="GitHub Username"
@@ -572,6 +582,7 @@ export const Login: React.FC = () => {
                                     <span className="text-[10px] text-neutral-600 font-semibold pr-1">Admin</span>
                                   ) : (
                                     <button
+                                      type="button"
                                       onClick={() => handleRemoveCollaborator(collab)}
                                       className="text-[10px] text-rose-500 hover:underline cursor-pointer pr-1"
                                     >
@@ -596,6 +607,7 @@ export const Login: React.FC = () => {
                 {selectedRepos.length} {selectedRepos.length === 1 ? 'repository' : 'repositories'} selected
               </div>
               <button
+                type="button"
                 onClick={loginWithGitHub}
                 className="h-9 px-4 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-all duration-200"
               >

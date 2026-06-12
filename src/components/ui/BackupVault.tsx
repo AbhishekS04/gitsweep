@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useBackupStore, type BackupLog } from '../../store/backupStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { toast } from 'sonner';
 
 interface BackupVaultProps {
@@ -49,17 +50,24 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
     const { token, user } = useAuthStore.getState();
     if (!token || !user) return;
 
+    const { useCustomTelegram, telegramBotToken } = useSettingsStore.getState();
+    const requestBody: any = {
+      fileId: log.fileId,
+      repoName: log.repoName,
+      token,
+      owner: user.login
+    };
+
+    if (useCustomTelegram && telegramBotToken) {
+      requestBody.botToken = telegramBotToken;
+    }
+
     setRestoringId(log.id);
     try {
       const res = await fetch('/api/restore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileId: log.fileId,
-          repoName: log.repoName,
-          token,
-          owner: user.login
-        })
+        body: JSON.stringify(requestBody)
       });
       const data = await res.json() as { ok: boolean; message_id?: number; file_id?: string; url?: string; error?: string };
       if (data.ok) {
@@ -395,7 +403,12 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                 onClick={async () => {
                                   setIsSyncing(true);
                                   try {
-                                    const res = await fetch('/api/telegram');
+                                    const { useCustomTelegram, telegramBotToken } = useSettingsStore.getState();
+                                    const url = new URL('/api/telegram', window.location.origin);
+                                    if (useCustomTelegram && telegramBotToken) {
+                                      url.searchParams.append('botToken', telegramBotToken);
+                                    }
+                                    const res = await fetch(url.toString());
                                     const data = await res.json();
                                     if (data.ok) {
                                       const docs = data.documents || [];

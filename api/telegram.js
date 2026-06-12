@@ -1,14 +1,13 @@
 export default async function handler(req, res) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!botToken || !chatId || botToken === 'your_telegram_bot_token') {
-    return res.status(503).json({ ok: false, error: 'Telegram is not configured on this server.' });
-  }
-
   if (req.method === 'GET') {
     try {
-      const updatesRes = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?limit=20&offset=-20`);
+      const { botToken: queryBotToken } = req.query || {};
+      const activeBotToken = queryBotToken || process.env.TELEGRAM_BOT_TOKEN;
+      if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
+        return res.status(400).json({ ok: false, error: 'Telegram Bot Token is not configured.' });
+      }
+
+      const updatesRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/getUpdates?limit=20&offset=-20`);
       const updates = await updatesRes.json();
       if (!updates.ok) return res.status(502).json({ ok: false, error: 'Failed to fetch updates' });
 
@@ -33,7 +32,14 @@ export default async function handler(req, res) {
 
   // Vercel pre-parses the body if it's JSON
   const payload = req.body || (typeof req === 'string' ? JSON.parse(req) : req);
-  const { owner, repo, token, meta, mode = 'delete' } = payload;
+  const { owner, repo, token, meta, mode = 'delete', botToken: bodyBotToken, chatId: bodyChatId } = payload;
+
+  const activeBotToken = bodyBotToken || process.env.TELEGRAM_BOT_TOKEN;
+  const activeChatId = bodyChatId || process.env.TELEGRAM_CHAT_ID;
+
+  if (!activeBotToken || !activeChatId || activeBotToken === 'your_telegram_bot_token') {
+    return res.status(503).json({ ok: false, error: 'Telegram is not configured.' });
+  }
 
   if (!owner || !repo || !token) {
     return res.status(400).json({ ok: false, error: 'Missing owner, repo, or token' });
@@ -114,12 +120,12 @@ export default async function handler(req, res) {
     }
 
     const formData = new FormData();
-    formData.append('chat_id', chatId);
+    formData.append('chat_id', activeChatId);
     formData.append('document', new Blob([zipBuffer], { type: 'application/zip' }), `${repo}.zip`);
     formData.append('caption', caption);
     formData.append('parse_mode', 'Markdown');
 
-    const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+    const telegramRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/sendDocument`, {
       method: 'POST',
       body: formData,
     });

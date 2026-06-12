@@ -5,8 +5,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const { fileId, repoName, token, owner } = req.body;
+  const { fileId, repoName, token, owner, botToken: bodyBotToken } = req.body || {};
+  const activeBotToken = bodyBotToken || process.env.TELEGRAM_BOT_TOKEN;
+
+  if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
+    return res.status(400).json({ ok: false, error: 'Telegram Bot Token is not configured.' });
+  }
 
   if (!fileId || !repoName || !token || !owner) {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
@@ -14,7 +18,7 @@ export default async function handler(req, res) {
 
   try {
     // Step 1: Get the file path from Telegram
-    const fileInfoRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+    const fileInfoRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/getFile?file_id=${fileId}`);
     const fileInfo = await fileInfoRes.json();
     
     if (!fileInfo.ok) {
@@ -22,7 +26,7 @@ export default async function handler(req, res) {
     }
 
     const filePath = fileInfo.result.file_path;
-    const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+    const fileUrl = `https://api.telegram.org/file/bot${activeBotToken}/${filePath}`;
 
     // Step 2: Download the zip
     const zipRes = await fetch(fileUrl);

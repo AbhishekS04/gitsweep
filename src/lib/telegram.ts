@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 
 export interface TelegramBackupResult {
   ok: boolean;
@@ -11,6 +12,10 @@ export interface TelegramBackupResult {
  * Returns true if Telegram credentials are configured.
  */
 export const isTelegramConfigured = (): boolean => {
+  const { useCustomTelegram, telegramBotToken, telegramChatId } = useSettingsStore.getState();
+  if (useCustomTelegram && telegramBotToken && telegramChatId) {
+    return true;
+  }
   return import.meta.env.VITE_TELEGRAM_CONFIGURED === 'true';
 };
 
@@ -39,10 +44,18 @@ export const backupRepoToTelegram = async (
       return { ok: false, error: 'Not authenticated' };
     }
 
+    const { useCustomTelegram, telegramBotToken, telegramChatId } = useSettingsStore.getState();
+    const payloadBody: any = { owner, repo, token, meta, mode };
+
+    if (useCustomTelegram && telegramBotToken && telegramChatId) {
+      payloadBody.botToken = telegramBotToken;
+      payloadBody.chatId = telegramChatId;
+    }
+
     const response = await fetch('/api/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ owner, repo, token, meta, mode }),
+      body: JSON.stringify(payloadBody),
     });
 
     const data = await response.json() as { ok: boolean; message_id?: number; file_id?: string; error?: string };
@@ -57,3 +70,4 @@ export const backupRepoToTelegram = async (
     return { ok: false, error: message };
   }
 };
+

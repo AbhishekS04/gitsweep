@@ -6,7 +6,9 @@ import {
   Menu,
   History,
   LogOut,
+  Settings,
 } from 'lucide-react';
+import { SettingsModal } from './SettingsModal';
 import { GithubIcon } from './GithubIcon';
 import { NotificationBell } from '../layout/NotificationBell';
 import { useAuthStore } from '../../store/authStore';
@@ -24,6 +26,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
   const { user, logout } = useAuthStore();
   const { logs } = useBackupStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -130,6 +133,15 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
 
                   {/* Notification Bell */}
                   <NotificationBell />
+
+                  {/* Settings Trigger */}
+                  <button
+                    onClick={() => setSettingsOpen(true)}
+                    title="Settings"
+                    className="relative p-2 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer border-none bg-transparent focus:outline-none"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </button>
                 </div>
 
                 {/* Profile Controls */}
@@ -204,6 +216,18 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
 
                         {/* Notification Bell */}
                         <NotificationBell />
+
+                        {/* Settings Trigger */}
+                        <button
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            setSettingsOpen(true);
+                          }}
+                          title="Settings"
+                          className="relative p-2 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer border-none bg-transparent focus:outline-none"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
 
@@ -253,6 +277,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
           
         </div>
       </div>
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

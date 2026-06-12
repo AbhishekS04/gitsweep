@@ -26,9 +26,9 @@ export const FilterBar: React.FC<{ totalCount: number }> = ({ totalCount }) => {
   return (
     <div className="flex flex-col gap-4 mb-6 border-b border-border/50 pb-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-2xl font-semibold tracking-tight">
           Repositories <span className="text-muted-foreground text-lg font-normal ml-2">{totalCount} total</span>
-        </h1>
+        </h2>
         
         <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
           <MorphingDiscoveryBar

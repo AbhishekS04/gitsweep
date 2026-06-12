@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GithubIcon } from '../components/ui/GithubIcon';
 import { Button } from '../components/ui/Button';
 import { loginWithGitHub } from '../lib/auth';
+import { useAuthStore } from '../store/authStore';
+import { getOctokit } from '../lib/github';
+import { toast } from 'sonner';
 import {
   ShieldCheck,
   Zap,
@@ -47,6 +50,42 @@ export const Login: React.FC = () => {
   const [collaborators, setCollaborators] = useState<string[]>(['AbhishekS04 (Owner)', 'collaborator-one']);
   const [newCollabName, setNewCollabName] = useState('');
   const [showInviteInput, setShowInviteInput] = useState(false);
+
+  const [patToken, setPatToken] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const { setToken, setUser } = useAuthStore();
+  const [authMethod, setAuthMethod] = useState<'oauth' | 'pat'>('oauth');
+
+  const handlePatLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = patToken.trim();
+    if (!token) {
+      toast.error('Token required', { description: 'Please enter your GitHub Personal Access Token.' });
+      return;
+    }
+
+    setIsValidating(true);
+    try {
+      setToken(token);
+      
+      const client = getOctokit();
+      const userRes = await client.rest.users.getAuthenticated();
+      
+      setUser({
+        login: userRes.data.login,
+        avatar_url: userRes.data.avatar_url || 'https://github.com/identicons/default.png',
+      });
+
+      toast.success('Connected successfully!', { description: `Welcome back, @${userRes.data.login}!` });
+    } catch (err) {
+      const error = err as Error;
+      console.error(error);
+      useAuthStore.setState({ token: null, user: null });
+      toast.error('Authentication failed', { description: 'Invalid token or insufficient scopes.' });
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const mockRepos: MockRepo[] = [
     {
@@ -213,23 +252,98 @@ export const Login: React.FC = () => {
           Bulk-manage, archive, rename, delete, and backup repositories from a single high-performance dashboard. Built specifically for developers.
         </motion.p>
 
-        {/* CTA Button */}
+        {/* Auth Method Selector & Forms */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.25, ease: 'easeOut' }}
-          className="flex flex-col items-center gap-3.5 pt-4"
+          className="flex flex-col items-center gap-6 pt-4 w-full max-w-sm mx-auto"
         >
-          <Button
-            onClick={loginWithGitHub}
-            className="h-12 px-8 gap-3.5 rounded-full font-bold text-sm bg-transparent border border-white/20 text-white cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors duration-150 shadow-none"
-          >
-            <GithubIcon className="h-5 w-5" />
-            Continue with GitHub
-          </Button>
-          <p className="text-[11px] font-mono text-neutral-500 select-none">
-            Uses GitHub OAuth · No password required · Scopes: repo, delete_repo, user
-          </p>
+          {/* Method Tabs */}
+          <div className="flex bg-zinc-900/60 p-0.5 rounded-full border border-white/10 w-fit gap-1">
+            <button
+              onClick={() => setAuthMethod('oauth')}
+              className={`text-xs px-4 py-1.5 rounded-full font-bold transition-all duration-200 cursor-pointer ${
+                authMethod === 'oauth'
+                  ? 'bg-white text-black shadow-sm'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              GitHub OAuth
+            </button>
+            <button
+              onClick={() => setAuthMethod('pat')}
+              className={`text-xs px-4 py-1.5 rounded-full font-bold transition-all duration-200 cursor-pointer ${
+                authMethod === 'pat'
+                  ? 'bg-white text-black shadow-sm'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              Personal Access Token
+            </button>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {authMethod === 'oauth' ? (
+              <motion.div
+                key="oauth"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="flex flex-col items-center gap-3 w-full"
+              >
+                <Button
+                  onClick={loginWithGitHub}
+                  className="h-12 px-8 gap-3.5 rounded-full font-bold text-sm bg-transparent border border-white/20 text-white cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors duration-150 shadow-none w-full animate-none"
+                >
+                  <GithubIcon className="h-5 w-5" />
+                  Continue with GitHub
+                </Button>
+                <p className="text-[11px] font-mono text-neutral-500 select-none text-center">
+                  Uses GitHub OAuth · No password required · Scopes: repo, delete_repo, user
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="pat"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="w-full flex flex-col gap-3"
+              >
+                <form onSubmit={handlePatLogin} className="flex flex-col gap-3 w-full">
+                  <input
+                    type="password"
+                    placeholder="Enter Personal Access Token (PAT)..."
+                    value={patToken}
+                    onChange={(e) => setPatToken(e.target.value)}
+                    disabled={isValidating}
+                    className="h-11 w-full rounded-full border border-white/10 bg-white/5 px-4 text-xs text-white font-mono placeholder:text-neutral-600 focus:border-white/30 focus:ring-1 focus:ring-white/10 outline-none transition-all text-center"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={isValidating || !patToken.trim()}
+                    className="h-11 rounded-full font-bold text-sm bg-white text-black border border-transparent cursor-pointer hover:bg-neutral-200 active:bg-neutral-300 transition-colors duration-150 w-full"
+                  >
+                    {isValidating ? 'Validating Token...' : 'Connect with PAT'}
+                  </Button>
+                </form>
+                <p className="text-[10px] font-sans text-neutral-500 text-center leading-normal">
+                  Requires scopes: <code className="font-mono text-neutral-400 bg-white/5 px-1 rounded">repo</code>,{' '}
+                  <code className="font-mono text-neutral-400 bg-white/5 px-1 rounded">delete_repo</code>,{' '}
+                  <code className="font-mono text-neutral-400 bg-white/5 px-1 rounded">user</code>.<br />
+                  <a
+                    href="https://github.com/settings/tokens/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline inline-block mt-1 font-semibold"
+                  >
+                    Generate a token on GitHub →
+                  </a>
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
       </div>

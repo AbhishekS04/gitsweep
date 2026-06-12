@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { fetchAllRepos } from '../lib/github';
 import type { Repo } from '../lib/github';
+import { useAuthStore } from './authStore';
 import { toast } from 'sonner';
 
 interface RepoState {
@@ -24,6 +25,11 @@ export const useRepoStore = create<RepoState>((set) => ({
     } catch (err) {
       const error = err as Error;
       toast.error('Sync failed', { description: error.message || 'Could not fetch repositories from GitHub.' });
+      
+      if (error.message?.includes('Bad credentials') || error.message?.includes('401')) {
+        useAuthStore.getState().logout();
+      }
+      
       set({ error: error.message || 'Failed to fetch repositories', loading: false });
     }
   },

@@ -56,17 +56,18 @@ const authMiddleware = (env: Record<string, string>) =>
 // --------------------------------------------------------------------------
 const telegramMiddleware = (env: Record<string, string>) =>
   async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    const botToken = env.TELEGRAM_BOT_TOKEN;
-    const chatId = env.TELEGRAM_CHAT_ID;
-
-    if (!botToken || !chatId || botToken === 'your_telegram_bot_token') {
-      res.statusCode = 503;
-      res.end(JSON.stringify({ ok: false, error: 'Telegram is not configured.' }));
-      return;
-    }
-
     if (req.method === 'GET') {
       try {
+        const url = new URL(req.url || '', `http://${req.headers.host}`);
+        const queryBotToken = url.searchParams.get('botToken');
+        const activeBotToken = queryBotToken || env.TELEGRAM_BOT_TOKEN;
+
+        if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ ok: false, error: 'Telegram Bot Token is not configured.' }));
+          return;
+        }
+
         interface TelegramUpdate {
           message?: {
             document?: {
@@ -77,7 +78,7 @@ const telegramMiddleware = (env: Record<string, string>) =>
           };
         }
 
-        const updatesRes = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?limit=20&offset=-20`);
+        const updatesRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/getUpdates?limit=20&offset=-20`);
         const updates = await updatesRes.json() as { ok: boolean, result: TelegramUpdate[] };
         if (!updates.ok) {
           res.statusCode = 502;
@@ -107,11 +108,19 @@ const telegramMiddleware = (env: Record<string, string>) =>
     if (req.method !== 'POST') return next();
 
     try {
-      // Read JSON body
       const chunks: Buffer[] = [];
       for await (const chunk of req) chunks.push(chunk as Buffer);
       const body = JSON.parse(Buffer.concat(chunks).toString());
-      const { owner, repo, token, meta, mode = 'delete' } = body;
+      const { owner, repo, token, meta, mode = 'delete', botToken: bodyBotToken, chatId: bodyChatId } = body;
+
+      const activeBotToken = bodyBotToken || env.TELEGRAM_BOT_TOKEN;
+      const activeChatId = bodyChatId || env.TELEGRAM_CHAT_ID;
+
+      if (!activeBotToken || !activeChatId || activeBotToken === 'your_telegram_bot_token') {
+        res.statusCode = 503;
+        res.end(JSON.stringify({ ok: false, error: 'Telegram is not configured.' }));
+        return;
+      }
 
       if (!owner || !repo || !token) {
         res.statusCode = 400;
@@ -179,12 +188,12 @@ const telegramMiddleware = (env: Record<string, string>) =>
 
       // Step 4: Upload
       const formData = new FormData();
-      formData.append('chat_id', chatId);
+      formData.append('chat_id', activeChatId);
       formData.append('document', new Blob([zipBuffer]), `${repo}.zip`);
       formData.append('caption', caption);
       formData.append('parse_mode', 'Markdown');
 
-      const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+      const telegramRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/sendDocument`, {
         method: 'POST',
         body: formData,
       });
@@ -218,18 +227,18 @@ const restoreMiddleware = (env: Record<string, string>) =>
   async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     if (req.method !== 'POST') return next();
 
-    const botToken = env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) {
-      res.statusCode = 503;
-      res.end(JSON.stringify({ ok: false, error: 'Telegram bot token missing.' }));
-      return;
-    }
-
     try {
       const chunks: Buffer[] = [];
       for await (const chunk of req) chunks.push(chunk as Buffer);
       const body = JSON.parse(Buffer.concat(chunks).toString());
-      const { fileId, repoName, owner, token } = body;
+      const { fileId, repoName, owner, token, botToken: bodyBotToken } = body;
+
+      const activeBotToken = bodyBotToken || env.TELEGRAM_BOT_TOKEN;
+      if (!activeBotToken || activeBotToken === 'your_telegram_bot_token') {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ ok: false, error: 'Telegram Bot Token is not configured.' }));
+        return;
+      }
 
       if (!fileId || !repoName || !token) {
         res.statusCode = 400;
@@ -238,7 +247,7 @@ const restoreMiddleware = (env: Record<string, string>) =>
       }
 
       // Step 1: Get file path from Telegram
-      const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+      const fileRes = await fetch(`https://api.telegram.org/bot${activeBotToken}/getFile?file_id=${fileId}`);
       const fileData = await fileRes.json() as {
         ok: boolean;
         description?: string;
@@ -259,7 +268,7 @@ const restoreMiddleware = (env: Record<string, string>) =>
         res.end(JSON.stringify({ ok: false, error: 'Telegram file path not found' }));
         return;
       }
-      const downloadUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+      const downloadUrl = `https://api.telegram.org/file/bot${activeBotToken}/${filePath}`;
 
       // Step 2: Download zip
       const zipRes = await fetch(downloadUrl);

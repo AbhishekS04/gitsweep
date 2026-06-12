@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -10,8 +10,11 @@ export const OAuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const { setToken, setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
@@ -66,6 +69,10 @@ export const OAuthCallback: React.FC = () => {
         const error = err as Error;
         console.error('OAuth Error:', error);
         const msg = error.message || 'An unexpected error occurred during authentication.';
+        
+        // Clear stale credentials on login failure
+        useAuthStore.getState().logout();
+        
         toast.error('Authentication Failed', { description: msg });
         setError(msg);
       }

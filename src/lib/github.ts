@@ -79,7 +79,7 @@ export const fetchAllRepos = async (): Promise<Repo[]> => {
     });
 
     if (response.data.length === 0) break;
-    repos.push(...(response.data as any));
+    repos.push(...(response.data as unknown as Repo[]));
     if (response.data.length < per_page) break;
     page++;
   }

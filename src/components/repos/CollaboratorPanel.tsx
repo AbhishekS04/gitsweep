@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Search, UserPlus, Trash2, Users, Loader2, Check
@@ -16,6 +16,19 @@ import {
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 
+interface GitHubUser {
+  id: number;
+  login: string;
+  avatar_url: string;
+}
+
+interface GitHubInvitation {
+  id: number;
+  invitee: GitHubUser | null;
+  email: string | null;
+  created_at: string;
+}
+
 export interface CollaboratorPanelProps {
   owner: string;
   repoName: string;
@@ -30,18 +43,20 @@ export const CollaboratorPanel: React.FC<CollaboratorPanelProps> = ({
   onCountChange
 }) => {
   const [activeTab, setActiveTab] = useState<'members' | 'add'>('members');
-  const [collaborators, setCollaborators] = useState<any[]>([]);
-  const [invitations, setInvitations] = useState<any[]>([]);
-  const [following, setFollowing] = useState<any[]>([]);
+  const [collaborators, setCollaborators] = useState<GitHubUser[]>([]);
+  const [invitations, setInvitations] = useState<GitHubInvitation[]>([]);
+  const [following, setFollowing] = useState<GitHubUser[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<GitHubUser[]>([]);
   const [searching, setSearching] = useState(false);
   
   // Track individual loading states for invites/kicks/cancelations to provide clean micro-feedback
   const [actionLoading, setActionLoading] = useState<Record<string, 'invite' | 'kick' | 'cancel' | null>>({});
 
-  const loadCollaborators = async () => {
+  const loadCollaborators = useCallback(async () => {
+    // Defer execution to prevent synchronous state setting in useEffect
+    await Promise.resolve();
     setLoadingCollaborators(true);
     try {
       const [collabs, invites] = await Promise.all([
@@ -51,8 +66,8 @@ export const CollaboratorPanel: React.FC<CollaboratorPanelProps> = ({
           return [];
         })
       ]);
-      setCollaborators(collabs);
-      setInvitations(invites);
+      setCollaborators(collabs as GitHubUser[]);
+      setInvitations(invites as unknown as GitHubInvitation[]);
       if (onCountChange) {
         onCountChange(collabs.length);
       }
@@ -60,44 +75,51 @@ export const CollaboratorPanel: React.FC<CollaboratorPanelProps> = ({
       window.dispatchEvent(new CustomEvent('repo-collab-updated', {
         detail: { owner, repoName, count: collabs.length }
       }));
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      const error = err as Error;
+      console.error(error);
       toast.error('Failed to load collaborators', { 
-        description: err.message || 'Check your access token scopes.' 
+        description: error.message || 'Check your access token scopes.' 
       });
     } finally {
       setLoadingCollaborators(false);
     }
-  };
+  }, [owner, repoName, onCountChange]);
 
   useEffect(() => {
-    loadCollaborators();
+    const timer = setTimeout(() => {
+      loadCollaborators();
+    }, 0);
     
     // Load authenticated user following list to suggest friends
     const loadFollowing = async () => {
       try {
         const data = await fetchAuthenticatedUserFollowing();
-        setFollowing(data);
+        setFollowing(data as GitHubUser[]);
       } catch (err) {
         console.warn('Could not load followed users:', err);
       }
     };
     loadFollowing();
-  }, [owner, repoName]);
+
+    return () => clearTimeout(timer);
+  }, [loadCollaborators]);
 
   // Debounced search for GitHub users
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
+      const timer = setTimeout(() => {
+        setSearchResults([]);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     const delayDebounceFn = setTimeout(async () => {
       setSearching(true);
       try {
         const results = await searchUsers(searchQuery);
-        setSearchResults(results);
-      } catch (err: any) {
+        setSearchResults(results as GitHubUser[]);
+      } catch (err) {
         console.error(err);
       } finally {
         setSearching(false);
@@ -113,10 +135,11 @@ export const CollaboratorPanel: React.FC<CollaboratorPanelProps> = ({
       await addRepoCollaborator(owner, repoName, username);
       toast.success(`Invitation sent to ${username}`);
       loadCollaborators();
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      const error = err as Error;
+      console.error(error);
       toast.error(`Failed to invite ${username}`, {
-        description: err.message || 'Make sure the user exists and you have admin access.'
+        description: error.message || 'Make sure the user exists and you have admin access.'
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [username]: null }));
@@ -134,10 +157,11 @@ export const CollaboratorPanel: React.FC<CollaboratorPanelProps> = ({
       await removeRepoCollaborator(owner, repoName, username);
       toast.success(`${username} removed successfully`);
       loadCollaborators();
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      const error = err as Error;
+      console.error(error);
       toast.error(`Failed to remove ${username}`, {
-        description: err.message || 'Check your repository permissions.'
+        description: error.message || 'Check your repository permissions.'
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [username]: null }));
@@ -150,10 +174,11 @@ export const CollaboratorPanel: React.FC<CollaboratorPanelProps> = ({
       await cancelRepoInvitation(owner, repoName, invitationId);
       toast.success(`Invitation to ${username} cancelled`);
       loadCollaborators();
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      const error = err as Error;
+      console.error(error);
       toast.error(`Failed to cancel invitation for ${username}`, {
-        description: err.message || 'Check your repository permissions.'
+        description: error.message || 'Check your repository permissions.'
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [username]: null }));

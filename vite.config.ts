@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import type { ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { IncomingMessage, ServerResponse } from 'http';
 import JSZip from 'jszip';
@@ -66,8 +67,18 @@ const telegramMiddleware = (env: Record<string, string>) =>
 
     if (req.method === 'GET') {
       try {
+        interface TelegramUpdate {
+          message?: {
+            document?: {
+              file_id: string;
+              file_name: string;
+            };
+            date: number;
+          };
+        }
+
         const updatesRes = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?limit=20&offset=-20`);
-        const updates = await updatesRes.json() as { ok: boolean, result: any[] };
+        const updates = await updatesRes.json() as { ok: boolean, result: TelegramUpdate[] };
         if (!updates.ok) {
           res.statusCode = 502;
           res.end(JSON.stringify({ ok: false, error: 'Failed to fetch updates' }));
@@ -77,17 +88,18 @@ const telegramMiddleware = (env: Record<string, string>) =>
         const documents = updates.result
           .filter(u => u.message?.document)
           .map(u => ({
-            fileId: u.message.document.file_id,
-            fileName: u.message.document.file_name,
-            date: u.message.date
+            fileId: u.message!.document!.file_id,
+            fileName: u.message!.document!.file_name,
+            date: u.message!.date
           }));
 
         res.setHeader('Content-Type', 'application/json');
         res.statusCode = 200;
         res.end(JSON.stringify({ ok: true, documents }));
-      } catch (e: any) {
+      } catch (e) {
+        const err = e as Error;
         res.statusCode = 500;
-        res.end(JSON.stringify({ ok: false, error: e.message }));
+        res.end(JSON.stringify({ ok: false, error: err.message }));
       }
       return;
     }
@@ -177,7 +189,14 @@ const telegramMiddleware = (env: Record<string, string>) =>
         body: formData,
       });
 
-      const tgData = await telegramRes.json() as any;
+      const tgData = await telegramRes.json() as {
+        result?: {
+          message_id?: number;
+          document?: {
+            file_id?: string;
+          };
+        };
+      };
       res.setHeader('Content-Type', 'application/json');
       res.statusCode = 200;
       res.end(JSON.stringify({ 
@@ -185,9 +204,10 @@ const telegramMiddleware = (env: Record<string, string>) =>
         message_id: tgData.result?.message_id,
         file_id: tgData.result?.document?.file_id
       }));
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as Error;
       res.statusCode = 500;
-      res.end(JSON.stringify({ ok: false, error: error.message }));
+      res.end(JSON.stringify({ ok: false, error: err.message }));
     }
   };
 
@@ -219,7 +239,13 @@ const restoreMiddleware = (env: Record<string, string>) =>
 
       // Step 1: Get file path from Telegram
       const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-      const fileData = await fileRes.json() as any;
+      const fileData = await fileRes.json() as {
+        ok: boolean;
+        description?: string;
+        result?: {
+          file_path?: string;
+        };
+      };
       if (!fileData.ok) {
         console.error('[Restore] Telegram getFile failed:', fileData);
         res.statusCode = 502;
@@ -227,7 +253,12 @@ const restoreMiddleware = (env: Record<string, string>) =>
         return;
       }
 
-      const filePath = fileData.result.file_path;
+      const filePath = fileData.result?.file_path;
+      if (!filePath) {
+        res.statusCode = 502;
+        res.end(JSON.stringify({ ok: false, error: 'Telegram file path not found' }));
+        return;
+      }
       const downloadUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
 
       // Step 2: Download zip
@@ -256,7 +287,7 @@ const restoreMiddleware = (env: Record<string, string>) =>
         return;
       }
 
-      const newRepo = await createRes.json() as any;
+      const newRepo = await createRes.json() as { html_url: string };
 
       // Step 5: Upload top files (demonstration/prototype logic)
       const filesToUpload = Object.keys(content.files)
@@ -277,9 +308,10 @@ const restoreMiddleware = (env: Record<string, string>) =>
       res.setHeader('Content-Type', 'application/json');
       res.statusCode = 200;
       res.end(JSON.stringify({ ok: true, url: newRepo.html_url }));
-    } catch (e: any) {
+    } catch (e) {
+      const err = e as Error;
       res.statusCode = 500;
-      res.end(JSON.stringify({ ok: false, error: e.message }));
+      res.end(JSON.stringify({ ok: false, error: err.message }));
     }
   };
 
@@ -313,7 +345,7 @@ const downloadMiddleware = () =>
 
 const apiPlugin = (env: Record<string, string>) => ({
   name: 'api-middleware',
-  configureServer(server: any) {
+  configureServer(server: ViteDevServer) {
     server.middlewares.use('/api/auth', authMiddleware(env));
     server.middlewares.use('/api/telegram', telegramMiddleware(env));
     server.middlewares.use('/api/restore', restoreMiddleware(env));

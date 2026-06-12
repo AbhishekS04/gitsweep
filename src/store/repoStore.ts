@@ -21,9 +21,10 @@ export const useRepoStore = create<RepoState>((set) => ({
     try {
       const repos = await fetchAllRepos();
       set({ repos, loading: false });
-    } catch (err: any) {
-      toast.error('Sync failed', { description: err.message || 'Could not fetch repositories from GitHub.' });
-      set({ error: err.message || 'Failed to fetch repositories', loading: false });
+    } catch (err) {
+      const error = err as Error;
+      toast.error('Sync failed', { description: error.message || 'Could not fetch repositories from GitHub.' });
+      set({ error: error.message || 'Failed to fetch repositories', loading: false });
     }
   },
   updateRepoLocally: (repoId, updates) => {

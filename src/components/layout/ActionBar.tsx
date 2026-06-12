@@ -60,7 +60,7 @@ export const ActionBar: React.FC = () => {
         successCount++;
       }
       catch (e) {
-        toast.error(`Failed: ${repo.name}`, { description: (e as any).message });
+        toast.error(`Failed: ${repo.name}`, { description: (e as Error).message });
       }
       setProgress({ current: i + 1, total: count, step, repoName: repo.name });
     }
@@ -88,7 +88,7 @@ export const ActionBar: React.FC = () => {
       // 1. Trigger Browser Download
       try {
         await downloadRepoZip(repo.owner.login, repo.name, repo.default_branch);
-      } catch (e) {
+      } catch {
         toast.error(`Local download failed: ${repo.name}`);
       }
 
@@ -122,7 +122,7 @@ export const ActionBar: React.FC = () => {
         } else {
           toast.error(`Telegram backup failed: ${repo.name}`, { description: result.error });
         }
-      } catch (e) {
+      } catch {
         toast.error(`Backup error: ${repo.name}`);
       }
     }
@@ -337,9 +337,10 @@ export const ActionBar: React.FC = () => {
       });
       toast.success(`Repository renamed to ${newName}`);
       deselectAll();
-    } catch (err: any) {
-      toast.error('Rename failed', { description: err.message || 'Check your permissions.' });
-      throw err;
+    } catch (err) {
+      const error = err as Error;
+      toast.error('Rename failed', { description: error.message || 'Check your permissions.' });
+      throw error;
     }
   };
 

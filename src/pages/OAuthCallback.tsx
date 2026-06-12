@@ -62,9 +62,10 @@ export const OAuthCallback: React.FC = () => {
         // Clean up and redirect
         sessionStorage.removeItem('oauth_state');
         navigate('/', { replace: true });
-      } catch (err: any) {
-        console.error('OAuth Error:', err);
-        const msg = err.message || 'An unexpected error occurred during authentication.';
+      } catch (err) {
+        const error = err as Error;
+        console.error('OAuth Error:', error);
+        const msg = error.message || 'An unexpected error occurred during authentication.';
         toast.error('Authentication Failed', { description: msg });
         setError(msg);
       }

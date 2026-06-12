@@ -12,12 +12,18 @@ interface TransferModalProps {
   isProcessing: boolean;
 }
 
+interface GitHubUser {
+  id: number;
+  login: string;
+  avatar_url: string;
+}
+
 export const TransferModal: React.FC<TransferModalProps> = ({
   isOpen, onClose, onConfirm, repoCount, isProcessing,
 }) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [results, setResults] = useState<GitHubUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<GitHubUser | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   
   const telegramReady = isTelegramConfigured();
@@ -27,14 +33,16 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
   useEffect(() => {
     if (query.length < 2) {
-      setResults([]);
-      return;
+      const timer = setTimeout(() => {
+        setResults([]);
+      }, 0);
+      return () => clearTimeout(timer);
     }
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
         const users = await searchUsers(query);
-        setResults(users);
+        setResults(users as GitHubUser[]);
       } catch (e) {
         console.error(e);
       } finally {
@@ -235,7 +243,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                     </button>
 
                     <button
-                      onClick={() => onConfirm(selectedUser?.login, shouldBackup)}
+                      onClick={() => onConfirm(selectedUser!.login, shouldBackup)}
                       disabled={isProcessing || !selectedUser}
                       style={{
                         flex: 1, height: '42px', borderRadius: '12px', border: 'none',

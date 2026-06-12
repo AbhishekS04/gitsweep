@@ -21,9 +21,12 @@ export const RenameModal: React.FC<RenameModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setNewName(currentName);
-      setError(null);
-      setIsProcessing(false);
+      const timer = setTimeout(() => {
+        setNewName(currentName);
+        setError(null);
+        setIsProcessing(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, currentName]);
 
@@ -58,8 +61,9 @@ export const RenameModal: React.FC<RenameModalProps> = ({
     try {
       await onConfirm(trimmed);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to rename repository');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to rename repository');
     } finally {
       setIsProcessing(false);
     }

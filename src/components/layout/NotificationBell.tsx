@@ -6,8 +6,19 @@ import { useRepoStore } from '../../store/repoStore';
 import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 
+interface GitHubInvite {
+  id: number;
+  repository: {
+    full_name: string;
+  };
+  inviter: {
+    login: string;
+    avatar_url: string;
+  };
+}
+
 export const NotificationBell: React.FC = () => {
-  const [invites, setInvites] = useState<any[]>([]);
+  const [invites, setInvites] = useState<GitHubInvite[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [actioningId, setActioningId] = useState<number | null>(null);
   const { fetchRepos } = useRepoStore();
@@ -16,16 +27,21 @@ export const NotificationBell: React.FC = () => {
   const loadInvites = async () => {
     try {
       const data = await listInvitations();
-      setInvites(data);
+      setInvites(data as unknown as GitHubInvite[]);
     } catch (e) {
       console.error('Failed to load invitations', e);
     }
   };
 
   useEffect(() => {
-    loadInvites();
+    const loadTimer = setTimeout(() => {
+      loadInvites();
+    }, 0);
     const timer = setInterval(loadInvites, 30000); // Poll every 30s
-    return () => clearInterval(timer);
+    return () => {
+      clearTimeout(loadTimer);
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {

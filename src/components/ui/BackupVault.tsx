@@ -14,6 +14,12 @@ interface BackupVaultProps {
   onClose: () => void;
 }
 
+interface TelegramDocument {
+  fileId: string;
+  fileName: string;
+  date: number;
+}
+
 export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => {
   const { logs, clearLogs, addLog, updateLog } = useBackupStore();
   const [search, setSearch] = useState('');
@@ -22,7 +28,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [tempFileId, setTempFileId] = useState('');
-  const [recentFiles, setRecentFiles] = useState<any[]>([]);
+  const [recentFiles, setRecentFiles] = useState<TelegramDocument[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const handleUpdateFileId = (id: string) => {
@@ -64,7 +70,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
       } else {
         toast.error('Restore failed', { description: data.error });
       }
-    } catch (e) {
+    } catch {
       toast.error('Restore failed', { description: 'Check console for details.' });
     } finally {
       setRestoringId(null);
@@ -397,7 +403,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
 
                                       // Auto-link logic: match filenames to repo names for missing fileIds
                                       let linkedCount = 0;
-                                      docs.forEach((doc: any) => {
+                                      docs.forEach((doc: TelegramDocument) => {
                                         logs.forEach(log => {
                                           if (!log.fileId && doc.fileName.toLowerCase().includes(log.repoName.toLowerCase())) {
                                             updateLog(log.id, { fileId: doc.fileId });
@@ -416,7 +422,7 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
                                     } else {
                                       toast.error('Sync failed', { description: data.error });
                                     }
-                                  } catch (e) {
+                                  } catch {
                                     toast.error('Sync failed');
                                   } finally {
                                     setIsSyncing(false);

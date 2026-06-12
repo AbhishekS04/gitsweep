@@ -34,3 +34,5 @@ github_tokens.enc
 graphify-out/cache/
 graphify-out/manifest.json
 graphify-out/cost.json
+
+Fix the build failure.txt

@@ -5,6 +5,7 @@ import { useSelectionStore } from '../../store/selectionStore';
 import { useAuthStore } from '../../store/authStore';
 import { CheckSquare, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { LayoutGroup } from 'framer-motion';
 
 interface RepoListProps {
   repos: Repo[];
@@ -65,45 +66,47 @@ export const RepoList: React.FC<RepoListProps> = ({ repos, isLoading }) => {
   ].filter(s => s.repos.length > 0);
 
   return (
-    <div className="space-y-12">
-      {sections.map((section) => (
-        <div key={section.title} className="space-y-4">
-          <div className="flex items-center justify-between border-b border-border/40 pb-2">
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold tracking-tight text-foreground/80 uppercase">
-                {section.title}
-                <span className="ml-2 text-xs font-normal text-muted-foreground lowercase">
-                  ({section.repos.length})
-                </span>
-              </h2>
+    <LayoutGroup id="repo-list">
+      <div className="space-y-12">
+        {sections.map((section) => (
+          <div key={section.title} className="space-y-4">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <div className="flex items-center gap-2">
+                <ChevronRight className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold tracking-tight text-foreground/80 uppercase">
+                  {section.title}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground lowercase">
+                    ({section.repos.length})
+                  </span>
+                </h2>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleSelectAll(section.repos)}
+                className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+              >
+                {section.repos.every(r => selectedIds.has(r.id)) ? 'Deselect Section' : 'Select Section'}
+              </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleSelectAll(section.repos)}
-              className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-            >
-              {section.repos.every(r => selectedIds.has(r.id)) ? 'Deselect Section' : 'Select Section'}
-            </Button>
-          </div>
 
-          <div className="flex flex-col gap-2">
-            {section.repos.map((repo, index) => (
-              <RepoRow 
-                key={repo.id} 
-                repo={repo} 
-                isSelected={selectedIds.has(repo.id)} 
-                onToggle={toggleSelection}
-                index={index}
-              />
-            ))}
+            <div className="flex flex-col gap-2">
+              {section.repos.map((repo, index) => (
+                <RepoRow 
+                  key={repo.id} 
+                  repo={repo} 
+                  isSelected={selectedIds.has(repo.id)} 
+                  onToggle={toggleSelection}
+                  index={index}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-      
-      {/* Spacer for bottom action bar */}
-      <div className="h-24" />
-    </div>
+        ))}
+        
+        {/* Spacer for bottom action bar */}
+        <div className="h-24" />
+      </div>
+    </LayoutGroup>
   );
 };

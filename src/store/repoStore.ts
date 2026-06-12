@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { fetchAllRepos } from '../lib/github';
 import type { Repo } from '../lib/github';
 import { useAuthStore } from './authStore';
+import { useTransferStore } from './transferStore';
 import { toast } from 'sonner';
 
 interface RepoState {
@@ -21,6 +22,18 @@ export const useRepoStore = create<RepoState>((set) => ({
     set({ loading: true, error: null });
     try {
       const repos = await fetchAllRepos();
+      const user = useAuthStore.getState().user;
+      
+      // Auto-clean completed transfers
+      const { pendingTransfers, removePendingTransfer } = useTransferStore.getState();
+      Object.keys(pendingTransfers).forEach((idStr) => {
+        const id = Number(idStr);
+        const repo = repos.find((r) => r.id === id);
+        if (!repo || (user && repo.owner.login !== user.login)) {
+          removePendingTransfer(id);
+        }
+      });
+
       set({ repos, loading: false });
     } catch (err) {
       const error = err as Error;

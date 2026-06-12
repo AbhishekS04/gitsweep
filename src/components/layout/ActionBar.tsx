@@ -18,6 +18,7 @@ import { TransferModal } from '../ui/TransferModal';
 import { RenameModal } from '../ui/RenameModal';
 import { transferRepo, type Repo } from '../../lib/github';
 import { useBackupStore } from '../../store/backupStore';
+import { useTransferStore } from '../../store/transferStore';
 import { toast } from 'sonner';
 import { FluidTabs, type TabItem } from '../ui/fluid-tabs';
 import { cn } from '../../lib/utils';
@@ -268,7 +269,6 @@ export const ActionBar: React.FC = () => {
 
     // Only target repos the user owns
     const ownRepos = selectedRepos.filter(r => r.owner.login === user.login);
-    const idsToRemove: number[] = [];
 
     let lastBackupResult: TelegramBackupResult | null = null;
 
@@ -307,7 +307,7 @@ export const ActionBar: React.FC = () => {
       setProgress({ current: i + 1, total: ownRepos.length, step: 'action', repoName: repo.name });
       try {
         await transferRepo(repo.owner.login, repo.name, newOwner);
-        idsToRemove.push(repo.id);
+        useTransferStore.getState().addPendingTransfer(repo.id, newOwner);
         addLog({
           repoName: repo.name, repoFullName: repo.full_name, owner: repo.owner.login,
           action: 'transfer', status: 'success',
@@ -317,10 +317,11 @@ export const ActionBar: React.FC = () => {
       catch (e) { console.error(e); }
     }
 
-    if (idsToRemove.length > 0) {
-      toast.success(`Shared ${idsToRemove.length} repositories with ${newOwner}`);
+    if (ownRepos.length > 0) {
+      toast.success(`Transfer initiated to ${newOwner}`, {
+        description: `Requested ownership transfer for ${ownRepos.length} repository/repositories. They will show as pending until accepted.`
+      });
     }
-    removeReposLocally(idsToRemove);
     setIsProcessing(false);
     setProgress(null);
     deselectAll();

@@ -118,7 +118,7 @@ export const FilterDisclosure: FC<FilterDisclosureProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 5 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2.5 z-50 flex w-[210px] flex-col gap-0.5 overflow-hidden rounded-xl border border-border/80 bg-background p-1.5 shadow-xl will-change-transform dark:border-border/40 dark:bg-neutral-900 origin-top-left sm:origin-top-right"
+            className="absolute right-0 top-full mt-2.5 z-50 flex w-[210px] flex-col gap-0.5 overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/95 backdrop-blur-xl p-1.5 shadow-2xl will-change-transform origin-top-right"
           >
             {/* Filter Section */}
             <div className="px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 select-none">

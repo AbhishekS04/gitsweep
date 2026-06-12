@@ -36,6 +36,8 @@ import { DiJava } from 'react-icons/di';
 import { TbBrandCSharp } from 'react-icons/tb';
 import { useAuthStore } from '../../store/authStore';
 import { useSelectionStore } from '../../store/selectionStore';
+import { useTransferStore } from '../../store/transferStore';
+import { toast } from 'sonner';
 import { fetchRepoCollaborators, fetchRepoLanguages } from '../../lib/github';
 import { CollaboratorPanel } from './CollaboratorPanel';
 import { Checkbox } from '../ui/Checkbox';
@@ -136,6 +138,11 @@ const GRADS = [
 const grad = (name: string) => GRADS[name.charCodeAt(0) % GRADS.length];
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 } as const;
+const springConfig = {
+  type: 'spring',
+  stiffness: 400,
+  damping: 40,
+} as const;
 
 /* ── DataRow ── */
 const DataRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
@@ -155,6 +162,9 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
   const { user } = useAuthStore();
   const isContribution = repo.owner.login !== user?.login;
   const { activeInviteRepoId, setActiveInviteRepoId, pinnedIds, togglePin } = useSelectionStore();
+  
+  const { getPendingTransfer, removePendingTransfer } = useTransferStore();
+  const pendingTransfer = getPendingTransfer(repo.id);
 
   const isInviteOpen = activeInviteRepoId === repo.id;
   const toggleInvite = () => setActiveInviteRepoId(isInviteOpen ? null : repo.id);
@@ -210,15 +220,19 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
 
   return (
     <motion.div
+      layout
+      transition={{
+        layout: springConfig,
+        default: { delay: Math.min(index * 0.02, 0.25), duration: 0.25, type: 'spring', stiffness: 200, damping: 22 }
+      }}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.02, 0.25), duration: 0.25, type: 'spring', stiffness: 200, damping: 22 }}
     >
       <motion.div
         layout
-        transition={spring}
+        transition={springConfig}
         className={cn(
-          "group rounded-xl border transition-all duration-300 backdrop-blur-md overflow-hidden",
+          "group/row rounded-xl border transition-all duration-300 backdrop-blur-md overflow-hidden",
           isSelected
             ? "border-indigo-500 bg-indigo-500/5 shadow-[0_0_20px_rgba(99,102,241,0.15)]"
             : isPinned
@@ -269,6 +283,26 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
           {/* Right: badges + chevron */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center gap-1.5 select-none">
+              {pendingTransfer && (
+                <div className="flex items-center gap-1.5 mr-1 shrink-0">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+                    <Clock size={11} className="animate-pulse" /> Pending Transfer to {pendingTransfer.newOwner}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removePendingTransfer(repo.id);
+                      toast.success('Pending transfer revoked locally', {
+                        description: 'The repository is now back in its normal active state.'
+                      });
+                    }}
+                    className="px-2 py-0.5 rounded-full border border-red-500/30 bg-red-500/10 text-[10px] font-bold text-red-400 uppercase tracking-wider hover:bg-red-500/20 active:bg-red-500/30 transition-colors cursor-pointer"
+                  >
+                    Revoke
+                  </button>
+                </div>
+              )}
               {repo.archived && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-400 uppercase tracking-wider">
                   <Archive size={11} /> Arch
@@ -289,6 +323,27 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                 </span>
               )}
             </div>
+
+            {/* Watermelon Pin Button */}
+            <motion.button
+              layout
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin(repo.id);
+              }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={springConfig}
+              className={cn(
+                "relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 shrink-0 cursor-pointer",
+                isPinned
+                  ? "bg-amber-500 text-white shadow-[0_0_12px_rgba(245,158,11,0.4)] opacity-100"
+                  : "bg-white/5 border border-white/10 text-neutral-400 hover:text-neutral-200 opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+              )}
+            >
+              <Pin size={14} className={cn(isPinned && "fill-white")} />
+            </motion.button>
+
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -440,7 +495,10 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                     <Globe size={13} /> Open on GitHub <ExternalLink size={10} />
                   </a>
 
-                  <button
+                  <motion.button
+                    layout
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={e => { e.stopPropagation(); togglePin(repo.id); }}
                     className={cn(
                       "flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 select-none cursor-pointer border",
@@ -450,7 +508,7 @@ export const RepoRow: React.FC<RepoItemProps> = ({ repo, isSelected, onToggle, i
                     )}
                   >
                     <Pin size={13} className={cn(isPinned && "fill-amber-400")} /> {isPinned ? 'Pinned' : 'Pin'}
-                  </button>
+                  </motion.button>
 
                   {!isContribution && (
                     <button

@@ -42,7 +42,15 @@ export const backupRepoToTelegram = async (
     }
 
     const { telegramBotToken, telegramChatId } = useSettingsStore.getState();
-    const payloadBody: any = { owner, repo, token, meta, mode };
+    const payloadBody: {
+      owner: string;
+      repo: string;
+      token: string;
+      meta: BackupMetadata;
+      mode: 'backup' | 'delete' | 'leave' | 'transfer';
+      botToken?: string;
+      chatId?: string;
+    } = { owner, repo, token, meta, mode };
 
     if (telegramBotToken && telegramChatId) {
       payloadBody.botToken = telegramBotToken;

@@ -51,7 +51,13 @@ export const BackupVault: React.FC<BackupVaultProps> = ({ isOpen, onClose }) => 
     if (!token || !user) return;
 
     const { telegramBotToken } = useSettingsStore.getState();
-    const requestBody: any = {
+    const requestBody: {
+      fileId: string;
+      repoName: string;
+      token: string;
+      owner: string;
+      botToken?: string;
+    } = {
       fileId: log.fileId,
       repoName: log.repoName,
       token,

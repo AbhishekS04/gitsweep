@@ -13,6 +13,7 @@ import { GithubIcon } from './GithubIcon';
 import { NotificationBell } from '../layout/NotificationBell';
 import { useAuthStore } from '../../store/authStore';
 import { useBackupStore } from '../../store/backupStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { loginWithGitHub } from '../../lib/auth';
@@ -25,8 +26,8 @@ interface Navigation5Props {
 export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
   const { user, logout } = useAuthStore();
   const { logs } = useBackupStore();
+  const { settingsModalOpen, setSettingsModalOpen } = useSettingsStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -136,7 +137,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
 
                   {/* Settings Trigger */}
                   <button
-                    onClick={() => setSettingsOpen(true)}
+                    onClick={() => setSettingsModalOpen(true)}
                     title="Settings"
                     className="relative p-2 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer border-none bg-transparent focus:outline-none"
                   >
@@ -221,7 +222,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
                         <button
                           onClick={() => {
                             setMobileMenuOpen(false);
-                            setSettingsOpen(true);
+                            setSettingsModalOpen(true);
                           }}
                           title="Settings"
                           className="relative p-2 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer border-none bg-transparent focus:outline-none"
@@ -277,7 +278,7 @@ export function Navigation5({ onVaultOpen, vaultOpen }: Navigation5Props) {
           
         </div>
       </div>
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsModal isOpen={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
     </div>
   );
 }
